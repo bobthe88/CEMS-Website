@@ -25,12 +25,12 @@
     },
     roster: [
       {
-        name: "Cadet Alex Carter",
-        certification: "AEMT",
-        contact: "alex.carter@institution.edu",
-        company: "A Company",
+        name: "Cadet Bennett Marshall",
+        certification: "EMT",
+        contact: "benentt.marshall@westpoint.edu",
+        company: "C-4",
         classYear: "2027",
-        leadership: "President",
+        leadership: "Cadet in Charge",
       },
       {
         name: "Cadet Brooke Ellis",
