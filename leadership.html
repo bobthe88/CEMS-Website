@@ -1,0 +1,95 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>CEMS | Leadership</title>
+  <meta name="description" content="Leadership and organizational hierarchy for the CEMS club.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600;700&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="assets/css/styles.css">
+</head>
+<body data-page="leadership">
+  <div class="page-shell">
+    <header class="site-header">
+      <div class="top-stripe"></div>
+      <div class="container nav-shell">
+        <a class="brand" href="index.html">
+          <span class="brand-mark">CEMS</span>
+          <span class="brand-text">
+            <strong>Cadet EMS</strong>
+            <small>Emergency Medical Services Club</small>
+          </span>
+        </a>
+        <button class="nav-toggle" type="button" aria-expanded="false" aria-controls="site-nav">Menu</button>
+        <nav class="site-nav" id="site-nav">
+          <a href="index.html" data-page="home">Home</a>
+          <a href="roster.html" data-page="roster">Roster</a>
+          <a href="calendar.html" data-page="calendar">Calendar</a>
+          <a href="signup.html" data-page="signup">Sign Up</a>
+          <a href="gallery.html" data-page="gallery">Gallery</a>
+          <a href="leadership.html" data-page="leadership">Leadership</a>
+          <a href="documents.html" data-page="documents">Documents</a>
+        </nav>
+      </div>
+    </header>
+
+    <main>
+      <section class="page-banner">
+        <div class="container page-panel">
+          <span class="page-accent">Leadership Structure</span>
+          <div class="page-intro">
+            <div>
+              <p class="eyebrow">Organizational Hierarchy</p>
+              <h1>Show the chain of responsibility clearly.</h1>
+            </div>
+            <p>
+              This page presents a professional leadership wire diagram with role titles and direct contact information.
+              It is designed to communicate structure quickly while still feeling formal and readable.
+            </p>
+          </div>
+        </div>
+      </section>
+
+      <section>
+        <div class="container chart-shell">
+          <div class="section-heading">
+            <div>
+              <p class="eyebrow">Wire Diagram</p>
+              <h2>Current leadership layout.</h2>
+            </div>
+            <p>The chart below is generated from a single shared leadership list, so updating names or emails only needs to happen once.</p>
+          </div>
+          <div class="org-chart" id="leadership-chart"></div>
+        </div>
+      </section>
+
+      <section>
+        <div class="container split-grid">
+          <article class="note-card">
+            <span class="page-accent">Use Case</span>
+            <h3>Useful for members and outside partners</h3>
+            <p>This page can help new members, faculty advisors, campus partners, or event coordinators understand who handles operations, training, records, and public affairs.</p>
+          </article>
+          <article class="note-card">
+            <span class="page-accent">Editing Note</span>
+            <h3>Update once, display everywhere</h3>
+            <p>Edit leadership roles in <code>assets/js/data.js</code> whenever positions turn over. The chart will update automatically after that change.</p>
+          </article>
+        </div>
+      </section>
+    </main>
+
+    <footer class="site-footer">
+      <div class="container footer-shell">
+        <p><strong>CEMS</strong> | Cadet Emergency Medical Services</p>
+        <p>Leadership contacts are managed in <code>assets/js/data.js</code>. <span data-current-year></span></p>
+      </div>
+    </footer>
+  </div>
+
+  <script src="assets/js/data.js"></script>
+  <script src="assets/js/site.js"></script>
+</body>
+</html>

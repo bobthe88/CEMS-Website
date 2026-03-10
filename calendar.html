@@ -1,0 +1,132 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>CEMS | Calendar</title>
+  <meta name="description" content="Operational calendar for CEMS staffing, training, and weekend events.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600;700&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="assets/css/styles.css">
+</head>
+<body data-page="calendar">
+  <div class="page-shell">
+    <header class="site-header">
+      <div class="top-stripe"></div>
+      <div class="container nav-shell">
+        <a class="brand" href="index.html">
+          <span class="brand-mark">CEMS</span>
+          <span class="brand-text">
+            <strong>Cadet EMS</strong>
+            <small>Emergency Medical Services Club</small>
+          </span>
+        </a>
+        <button class="nav-toggle" type="button" aria-expanded="false" aria-controls="site-nav">Menu</button>
+        <nav class="site-nav" id="site-nav">
+          <a href="index.html" data-page="home">Home</a>
+          <a href="roster.html" data-page="roster">Roster</a>
+          <a href="calendar.html" data-page="calendar">Calendar</a>
+          <a href="signup.html" data-page="signup">Sign Up</a>
+          <a href="gallery.html" data-page="gallery">Gallery</a>
+          <a href="leadership.html" data-page="leadership">Leadership</a>
+          <a href="documents.html" data-page="documents">Documents</a>
+        </nav>
+      </div>
+    </header>
+
+    <main>
+      <section class="page-banner">
+        <div class="container page-panel">
+          <span class="page-accent">Operational Calendar</span>
+          <div class="page-intro">
+            <div>
+              <p class="eyebrow">Scheduling and Coverage</p>
+              <h1>Track staffing, training, and weekend support.</h1>
+            </div>
+            <p>
+              This page gives you a clean monthly calendar backed by the same event data that feeds the homepage and signup page.
+              It is a good fit for event coverage schedules, recurring training nights, and weekend duty windows.
+            </p>
+          </div>
+        </div>
+      </section>
+
+      <section>
+        <div class="container calendar-shell">
+          <div class="section-heading">
+            <div>
+              <p class="eyebrow">Monthly View</p>
+              <h2>Mission schedule at a glance.</h2>
+            </div>
+            <p>Use this page for the club schedule today, or later swap in a live embedded calendar if you move to Google Calendar or another source.</p>
+          </div>
+
+          <div class="calendar-layout">
+            <div>
+              <div class="calendar-controls">
+                <button id="prev-month" type="button">Previous</button>
+                <h3 id="calendar-title">Month Year</h3>
+                <button id="next-month" type="button">Next</button>
+              </div>
+
+              <div class="calendar-legend">
+                <span class="category-badge staffing">Staffing</span>
+                <span class="category-badge training">Training</span>
+                <span class="category-badge weekend">Weekend</span>
+              </div>
+
+              <div class="calendar-weekdays" aria-hidden="true">
+                <span>Sun</span>
+                <span>Mon</span>
+                <span>Tue</span>
+                <span>Wed</span>
+                <span>Thu</span>
+                <span>Fri</span>
+                <span>Sat</span>
+              </div>
+
+              <div class="calendar-grid" id="calendar-grid"></div>
+            </div>
+
+            <aside>
+              <div class="section-heading compact">
+                <div>
+                  <p class="eyebrow">Event List</p>
+                  <h2>This month</h2>
+                </div>
+              </div>
+              <div class="timeline-stack" id="month-events"></div>
+            </aside>
+          </div>
+        </div>
+      </section>
+
+      <section>
+        <div class="container split-grid">
+          <article class="note-card">
+            <span class="page-accent">Future Option</span>
+            <h3>Embed a live calendar later</h3>
+            <p>If your club starts using Google Calendar, you can replace or supplement this static calendar with an embedded live calendar while keeping the same visual style.</p>
+          </article>
+          <article class="note-card">
+            <span class="page-accent">Planning Use</span>
+            <h3>Good fit for three event types</h3>
+            <p>Staffing requirements, training nights, and weekend events are already treated as separate categories so they remain easy to scan across the month.</p>
+          </article>
+        </div>
+      </section>
+    </main>
+
+    <footer class="site-footer">
+      <div class="container footer-shell">
+        <p><strong>CEMS</strong> | Cadet Emergency Medical Services</p>
+        <p>Calendar events are managed in <code>assets/js/data.js</code>. <span data-current-year></span></p>
+      </div>
+    </footer>
+  </div>
+
+  <script src="assets/js/data.js"></script>
+  <script src="assets/js/site.js"></script>
+</body>
+</html>

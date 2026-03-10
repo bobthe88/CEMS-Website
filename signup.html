@@ -1,0 +1,136 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>CEMS | Sign Up</title>
+  <meta name="description" content="Signup hub for CEMS staffing, training, and weekend events with support for future SignupGenius workflows.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600;700&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="assets/css/styles.css">
+</head>
+<body data-page="signup">
+  <div class="page-shell">
+    <header class="site-header">
+      <div class="top-stripe"></div>
+      <div class="container nav-shell">
+        <a class="brand" href="index.html">
+          <span class="brand-mark">CEMS</span>
+          <span class="brand-text">
+            <strong>Cadet EMS</strong>
+            <small>Emergency Medical Services Club</small>
+          </span>
+        </a>
+        <button class="nav-toggle" type="button" aria-expanded="false" aria-controls="site-nav">Menu</button>
+        <nav class="site-nav" id="site-nav">
+          <a href="index.html" data-page="home">Home</a>
+          <a href="roster.html" data-page="roster">Roster</a>
+          <a href="calendar.html" data-page="calendar">Calendar</a>
+          <a href="signup.html" data-page="signup">Sign Up</a>
+          <a href="gallery.html" data-page="gallery">Gallery</a>
+          <a href="leadership.html" data-page="leadership">Leadership</a>
+          <a href="documents.html" data-page="documents">Documents</a>
+        </nav>
+      </div>
+    </header>
+
+    <main>
+      <section class="page-banner">
+        <div class="container page-panel">
+          <span class="page-accent">Signup Hub</span>
+          <div class="page-intro">
+            <div>
+              <p class="eyebrow">Coverage and Volunteer Signups</p>
+              <h1>Send members straight to the signup list.</h1>
+            </div>
+            <p>
+              This page is ready for your SignupGenius workflow right now and also sets you up for a future sync solution if you want
+              rostered signups to show up automatically in a website table or calendar.
+            </p>
+            <div class="button-row">
+              <a class="button button-primary" id="signup-link" href="https://www.signupgenius.com/" target="_blank" rel="noreferrer">Open SignupGenius</a>
+              <a class="button button-secondary" href="calendar.html">Review Event Calendar</a>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section>
+        <div class="container">
+          <div class="section-heading">
+            <div>
+              <p class="eyebrow">Open Opportunities</p>
+              <h2>Current events that need people.</h2>
+            </div>
+            <p>The cards below are filtered from the shared event list to show only items marked as open for signup.</p>
+          </div>
+          <div class="card-grid" id="signup-opportunities"></div>
+        </div>
+      </section>
+
+      <section>
+        <div class="container split-grid">
+          <article class="note-card signup-shell">
+            <span class="page-accent">Integration Path</span>
+            <h3>Direct sync is possible, but it needs a helper service.</h3>
+            <p>
+              Because GitHub Pages is a static host, a live SignupGenius-to-website sync usually needs an outside step such as a Google Sheet,
+              GitHub Action, or small serverless function. That is very doable later, but it is not something GitHub Pages can safely do by itself.
+            </p>
+          </article>
+          <article class="note-card signup-shell">
+            <span class="page-accent">Recommended First Step</span>
+            <h3>Start simple and professional</h3>
+            <p>Use this page as your official signup portal now. Once your workflow stabilizes, we can add a sync layer that publishes confirmed signups into a table or calendar feed.</p>
+          </article>
+        </div>
+      </section>
+
+      <section>
+        <div class="container">
+          <div class="section-heading">
+            <div>
+              <p class="eyebrow">Future Automation</p>
+              <h2>One clean path to syncing signup data.</h2>
+            </div>
+            <p>This is the most realistic architecture if you want SignupGenius participation to appear automatically on a GitHub Pages site.</p>
+          </div>
+          <div class="signup-flow">
+            <article class="flow-step">
+              <h3>1. SignupGenius</h3>
+              <p>Members claim slots through the signup page you already use.</p>
+            </article>
+            <article class="flow-step">
+              <h3>2. Sheet or Export</h3>
+              <p>Pull signup data into a Google Sheet or exported CSV.</p>
+            </article>
+            <article class="flow-step">
+              <h3>3. Automation</h3>
+              <p>Use a script, GitHub Action, or Apps Script to convert the data.</p>
+            </article>
+            <article class="flow-step">
+              <h3>4. JSON Output</h3>
+              <p>Publish a clean data file the website can read safely.</p>
+            </article>
+            <article class="flow-step">
+              <h3>5. Site Update</h3>
+              <p>Show live staffing counts or names on the calendar and roster pages.</p>
+            </article>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <footer class="site-footer">
+      <div class="container footer-shell">
+        <p><strong>CEMS</strong> | Cadet Emergency Medical Services</p>
+        <p>Signup links are managed in <code>assets/js/data.js</code>. <span data-current-year></span></p>
+      </div>
+    </footer>
+  </div>
+
+  <script src="assets/js/data.js"></script>
+  <script src="assets/js/site.js"></script>
+</body>
+</html>

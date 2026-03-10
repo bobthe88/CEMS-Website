@@ -1,0 +1,145 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>CEMS | Membership Roster</title>
+  <meta name="description" content="Membership roster for the CEMS club with certification levels, contact information, company, class year, and leadership roles.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600;700&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="assets/css/styles.css">
+</head>
+<body data-page="roster">
+  <div class="page-shell">
+    <header class="site-header">
+      <div class="top-stripe"></div>
+      <div class="container nav-shell">
+        <a class="brand" href="index.html">
+          <span class="brand-mark">CEMS</span>
+          <span class="brand-text">
+            <strong>Cadet EMS</strong>
+            <small>Emergency Medical Services Club</small>
+          </span>
+        </a>
+        <button class="nav-toggle" type="button" aria-expanded="false" aria-controls="site-nav">Menu</button>
+        <nav class="site-nav" id="site-nav">
+          <a href="index.html" data-page="home">Home</a>
+          <a href="roster.html" data-page="roster">Roster</a>
+          <a href="calendar.html" data-page="calendar">Calendar</a>
+          <a href="signup.html" data-page="signup">Sign Up</a>
+          <a href="gallery.html" data-page="gallery">Gallery</a>
+          <a href="leadership.html" data-page="leadership">Leadership</a>
+          <a href="documents.html" data-page="documents">Documents</a>
+        </nav>
+      </div>
+    </header>
+
+    <main>
+      <section class="page-banner">
+        <div class="container page-panel">
+          <span class="page-accent">Membership Roster</span>
+          <div class="page-intro">
+            <div>
+              <p class="eyebrow">Personnel Directory</p>
+              <h1>Know the team and their qualifications.</h1>
+            </div>
+            <p>
+              This roster page is set up to show certification level, contact information, company, class year, and leadership positions.
+              Because this is a public website, you may want to use official school emails and limit personal phone numbers unless you intend
+              the site to be member-only.
+            </p>
+          </div>
+        </div>
+      </section>
+
+      <section>
+        <div class="container metrics-grid">
+          <article class="metric-card">
+            <strong id="roster-total">0</strong>
+            <span>Total Members</span>
+          </article>
+          <article class="metric-card">
+            <strong id="roster-visible">0</strong>
+            <span>Visible Results</span>
+          </article>
+          <article class="metric-card">
+            <strong id="roster-certifications">0</strong>
+            <span>Certification Types</span>
+          </article>
+          <article class="metric-card">
+            <strong>Public</strong>
+            <span>Directory Format</span>
+          </article>
+        </div>
+      </section>
+
+      <section>
+        <div class="container roster-shell">
+          <div class="section-heading">
+            <div>
+              <p class="eyebrow">Roster Tools</p>
+              <h2>Search and filter members.</h2>
+            </div>
+            <p>The table below is driven from one shared data file, so you only have to update roster information in one place.</p>
+          </div>
+
+          <div class="filter-shell">
+            <div class="field">
+              <label for="roster-search">Search name, company, contact, or role</label>
+              <input id="roster-search" type="search" placeholder="Search the roster">
+            </div>
+            <div class="field">
+              <label for="cert-filter">Filter by certification</label>
+              <select id="cert-filter">
+                <option value="All">All certifications</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="data-table-shell">
+            <table class="data-table">
+              <thead>
+                <tr>
+                  <th>Name</th>
+                  <th>Certification</th>
+                  <th>Contact</th>
+                  <th>Company</th>
+                  <th>Class Year</th>
+                  <th>Leadership</th>
+                </tr>
+              </thead>
+              <tbody id="roster-body"></tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <section>
+        <div class="container split-grid">
+          <article class="note-card">
+            <span class="page-accent">Editing Note</span>
+            <h3>Fastest way to update the roster</h3>
+            <p>Edit the member entries inside <code>assets/js/data.js</code>. The search, filtering, counts, and table all update automatically from that shared list.</p>
+          </article>
+          <article class="note-card">
+            <span class="page-accent">Privacy Note</span>
+            <h3>Keep public data deliberate</h3>
+            <p>If this site stays fully public, consider using official emails, leadership duty contacts, or role-based contact info instead of private personal data.</p>
+          </article>
+        </div>
+      </section>
+    </main>
+
+    <footer class="site-footer">
+      <div class="container footer-shell">
+        <p><strong>CEMS</strong> | Cadet Emergency Medical Services</p>
+        <p>Roster data is managed in <code>assets/js/data.js</code>. <span data-current-year></span></p>
+      </div>
+    </footer>
+  </div>
+
+  <script src="assets/js/data.js"></script>
+  <script src="assets/js/site.js"></script>
+</body>
+</html>

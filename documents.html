@@ -1,0 +1,95 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>CEMS | Documents</title>
+  <meta name="description" content="Documents library for CEMS SOPs, training manuals, and administrative files.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600;700&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="assets/css/styles.css">
+</head>
+<body data-page="documents">
+  <div class="page-shell">
+    <header class="site-header">
+      <div class="top-stripe"></div>
+      <div class="container nav-shell">
+        <a class="brand" href="index.html">
+          <span class="brand-mark">CEMS</span>
+          <span class="brand-text">
+            <strong>Cadet EMS</strong>
+            <small>Emergency Medical Services Club</small>
+          </span>
+        </a>
+        <button class="nav-toggle" type="button" aria-expanded="false" aria-controls="site-nav">Menu</button>
+        <nav class="site-nav" id="site-nav">
+          <a href="index.html" data-page="home">Home</a>
+          <a href="roster.html" data-page="roster">Roster</a>
+          <a href="calendar.html" data-page="calendar">Calendar</a>
+          <a href="signup.html" data-page="signup">Sign Up</a>
+          <a href="gallery.html" data-page="gallery">Gallery</a>
+          <a href="leadership.html" data-page="leadership">Leadership</a>
+          <a href="documents.html" data-page="documents">Documents</a>
+        </nav>
+      </div>
+    </header>
+
+    <main>
+      <section class="page-banner">
+        <div class="container page-panel">
+          <span class="page-accent">Documents Library</span>
+          <div class="page-intro">
+            <div>
+              <p class="eyebrow">Reference Material</p>
+              <h1>Put SOPs, manuals, and forms in one official place.</h1>
+            </div>
+            <p>
+              This page is ready to hold your standard operating procedures, training manuals, onboarding packets, and administrative references.
+              The card layout keeps the library organized and professional even as it grows.
+            </p>
+          </div>
+        </div>
+      </section>
+
+      <section>
+        <div class="container documents-shell">
+          <div class="section-heading">
+            <div>
+              <p class="eyebrow">Document Groups</p>
+              <h2>Structured for operations and training.</h2>
+            </div>
+            <p>Upload final PDF files to <code>assets/documents</code> and then connect those file paths in the shared data file.</p>
+          </div>
+          <div id="documents-grid"></div>
+        </div>
+      </section>
+
+      <section>
+        <div class="container split-grid">
+          <article class="note-card">
+            <span class="page-accent">Recommended Files</span>
+            <h3>Good starting documents</h3>
+            <p>Begin with your SOP, onboarding guide, recurring training references, equipment inventory sheets, and event coverage checklists.</p>
+          </article>
+          <article class="note-card">
+            <span class="page-accent">Naming Convention</span>
+            <h3>Keep file names predictable</h3>
+            <p>Short, clear names like <code>cems-sop.pdf</code> and <code>airway-trauma-manual.pdf</code> make long-term maintenance easier.</p>
+          </article>
+        </div>
+      </section>
+    </main>
+
+    <footer class="site-footer">
+      <div class="container footer-shell">
+        <p><strong>CEMS</strong> | Cadet Emergency Medical Services</p>
+        <p>Documents live in <code>assets/documents</code>. <span data-current-year></span></p>
+      </div>
+    </footer>
+  </div>
+
+  <script src="assets/js/data.js"></script>
+  <script src="assets/js/site.js"></script>
+</body>
+</html>
