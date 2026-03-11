@@ -177,6 +177,11 @@ section {
 
 .hero-section {
   padding-top: 4rem;
+  padding-bottom: 2.4rem;
+}
+
+.home-upcoming-section {
+  padding-top: 2.4rem;
 }
 
 .hero-grid,
@@ -335,11 +340,11 @@ p {
 .hero-logo-card {
   display: grid;
   gap: 1rem;
-  min-height: 220px;
+  min-height: 170px;
 }
 
 .hero-photo-card {
-  min-height: 320px;
+  min-height: 240px;
   display: flex;
   flex-direction: column;
   justify-content: flex-end;
