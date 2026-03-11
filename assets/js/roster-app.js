@@ -1,4 +1,4 @@
-﻿import {
+import {
   createRosterMember,
   deleteRosterMember,
   fetchRosterMembers,
@@ -111,31 +111,23 @@ function getCurrentAccessLabel() {
 }
 
 function renderStaffAuth() {
-  const isAuthenticated = Boolean(state.context.user);
   const isStaff = state.context.role === "staff";
 
   if (loginShell) {
-    loginShell.hidden = isAuthenticated;
+    loginShell.hidden = isStaff;
   }
 
   if (sessionShell) {
-    sessionShell.hidden = !isAuthenticated;
+    sessionShell.hidden = !isStaff;
   }
 
-  if (!isAuthenticated || !sessionTitle || !sessionCopy) {
+  if (!isStaff || !sessionTitle || !sessionCopy) {
     return;
   }
 
   const email = state.context.user?.email || "This account";
-
-  if (isStaff) {
-    sessionTitle.textContent = "Editing enabled.";
-    sessionCopy.textContent = `${email} is signed in as staff. You can add, edit, and remove roster members above.`;
-    return;
-  }
-
-  sessionTitle.textContent = "Signed in without staff access.";
-  sessionCopy.textContent = `${email} is signed in, but this account is not marked as staff. The roster remains view-only.`;
+  sessionTitle.textContent = "Editing enabled.";
+  sessionCopy.textContent = `${email} is signed in as staff. You can add, edit, and remove roster members above.`;
 }
 
 function setPageUi(isStaff) {
