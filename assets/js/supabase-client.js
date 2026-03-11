@@ -1,4 +1,4 @@
-﻿import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm";
+import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm";
 
 const rawConfig = window.CEMS_SUPABASE_CONFIG || {};
 const config = {
@@ -6,7 +6,7 @@ const config = {
   publishableKey: rawConfig.publishableKey || rawConfig.anonKey || "",
   rosterTable: rawConfig.rosterTable || "roster_members",
   profileTable: rawConfig.profileTable || "user_profiles",
-  portalRedirect: rawConfig.portalRedirect || "roster.html",
+  portalRedirect: rawConfig.portalRedirect || "index.html",
 };
 
 function looksConfigured(value) {
@@ -21,7 +21,29 @@ export function getSupabaseConfig() {
   return { ...config };
 }
 
+export function stashPendingSession(session) {
+  if (!session || !window.sessionStorage) {
+    return;
+  }
+
+  const tokenPair = {
+    access_token: session.access_token,
+    refresh_token: session.refresh_token,
+  };
+
+  window.sessionStorage.setItem(pendingSessionStorageKey, JSON.stringify(tokenPair));
+}
+
+export function clearPendingSession() {
+  if (!window.sessionStorage) {
+    return;
+  }
+
+  window.sessionStorage.removeItem(pendingSessionStorageKey);
+}
+
 let supabaseClient = null;
+const pendingSessionStorageKey = "cems-pending-session";
 
 export function getSupabaseClient() {
   if (!isSupabaseConfigured()) {
@@ -53,6 +75,8 @@ export async function signInWithPassword(email, password) {
 }
 
 export async function signOutCurrentUser() {
+  clearPendingSession();
+
   const supabase = getSupabaseClient();
 
   if (!supabase) {
@@ -112,6 +136,63 @@ export async function getSessionContext() {
   };
 }
 
+export async function waitForSessionContext(options = {}) {
+  const timeoutMs = options.timeoutMs || 2500;
+  const intervalMs = options.intervalMs || 150;
+  const start = Date.now();
+  let context = await getSessionContext();
+
+  while (!context.user && Date.now() - start < timeoutMs) {
+    await new Promise((resolve) => window.setTimeout(resolve, intervalMs));
+    context = await getSessionContext();
+  }
+
+  return context;
+}
+
+export async function restorePendingSession() {
+  if (!window.sessionStorage) {
+    return null;
+  }
+
+  const rawValue = window.sessionStorage.getItem(pendingSessionStorageKey);
+
+  if (!rawValue) {
+    return null;
+  }
+
+  const supabase = getSupabaseClient();
+
+  if (!supabase) {
+    return null;
+  }
+
+  try {
+    const tokenPair = JSON.parse(rawValue);
+
+    if (!tokenPair?.access_token || !tokenPair?.refresh_token) {
+      clearPendingSession();
+      return null;
+    }
+
+    const { data, error } = await supabase.auth.setSession({
+      access_token: tokenPair.access_token,
+      refresh_token: tokenPair.refresh_token,
+    });
+
+    clearPendingSession();
+
+    if (error) {
+      throw error;
+    }
+
+    return data?.session || null;
+  } catch (_error) {
+    clearPendingSession();
+    return null;
+  }
+}
+
 export function onAuthStateChange(handler) {
   const supabase = getSupabaseClient();
 
@@ -119,9 +200,11 @@ export function onAuthStateChange(handler) {
     return { data: { subscription: { unsubscribe() {} } } };
   }
 
-  return supabase.auth.onAuthStateChange(async (_event, session) => {
-    const context = await getSessionContext();
-    handler({ ...context, session: session || context.session });
+  return supabase.auth.onAuthStateChange((event, session) => {
+    window.setTimeout(async () => {
+      const context = await getSessionContext();
+      handler({ ...context, event, session: session || context.session });
+    }, 0);
   });
 }
 
@@ -198,3 +281,4 @@ export async function deleteRosterMember(id) {
     throw error;
   }
 }
+

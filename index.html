@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8">
@@ -10,7 +10,7 @@
   <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600;700&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="assets/css/styles.css">
 </head>
-<body data-page="home">
+<body data-page="home" data-requires-auth="member" data-auth-state="pending" aria-busy="true">
   <div class="page-shell">
     <header class="site-header">
       <div class="top-stripe"></div>
@@ -40,23 +40,8 @@
         <div class="container hero-grid">
           <div class="hero-copy">
             <div>
-              <p class="eyebrow">Emergency Medical Services Club</p>
-              <h1>Prepared to serve with discipline, skill, and presence.</h1>
-            </div>
-            <p>
-              This site is built to showcase your club professionally while giving members a clean place to find the roster,
-              staffing calendar, signups, leadership contacts, important documents, and photos. It is ready for GitHub Pages and
-              designed to grow with the organization.
-            </p>
-            <div class="button-row">
-              <a class="button button-primary" href="signup.html">Open Signups</a>
-              <a class="button button-secondary" href="calendar.html">View Calendar</a>
-              <a class="button button-secondary" href="leadership.html">Leadership Structure</a>
-            </div>
-            <div class="key-list">
-              <span>White / Black / Gold theme</span>
-              <span>Responsive for desktop and mobile</span>
-              <span>Static and GitHub Pages friendly</span>
+              <h1>Cadet Emergency Services</h1>
+              <h3>Welcome to the Cadet EMS homepage. Please use the tabs at the top to navigate to your desired destination.</h3>
             </div>
           </div>
 
@@ -74,131 +59,15 @@
         </div>
       </section>
 
-      <section>
-        <div class="container metrics-grid">
-          <article class="metric-card">
-            <strong id="stat-members">0</strong>
-            <span>Members Listed</span>
-          </article>
-          <article class="metric-card">
-            <strong id="stat-leaders">0</strong>
-            <span>Leadership Roles</span>
-          </article>
-          <article class="metric-card">
-            <strong id="stat-events">0</strong>
-            <span>Upcoming Events</span>
-          </article>
-          <article class="metric-card">
-            <strong id="stat-documents">0</strong>
-            <span>Document Slots</span>
-          </article>
-        </div>
-      </section>
-
-      <section>
-        <div class="container">
-          <div class="section-heading">
-            <div>
-              <p class="eyebrow">Mission Focus</p>
-              <h2>Built for readiness and continuity.</h2>
-            </div>
-            <p>The homepage frames CEMS as a disciplined operational organization, not just a student club. Each section is designed to feel official, organized, and trustworthy.</p>
-          </div>
-          <div class="card-grid">
-            <article class="info-card">
-              <h3>Operational Visibility</h3>
-              <p>Highlight staffing commitments, weekend support windows, and event readiness so members always know where the mission stands.</p>
-            </article>
-            <article class="info-card">
-              <h3>Training Standards</h3>
-              <p>Keep skills refreshers, manuals, and recurring training opportunities visible so professional development stays central.</p>
-            </article>
-            <article class="info-card">
-              <h3>Leadership Access</h3>
-              <p>Present a clear chain of responsibility with contact information and a leadership layout that reads like an organization chart.</p>
-            </article>
-            <article class="info-card">
-              <h3>Long-Term Growth</h3>
-              <p>Everything is structured so you can expand later with more pages, real files, extra filters, or future integrations.</p>
-            </article>
-          </div>
-        </div>
-      </section>
-
-      <section>
+      <section class="home-upcoming-section">
         <div class="container">
           <div class="section-heading">
             <div>
               <p class="eyebrow">Upcoming Activity</p>
               <h2>Next on the schedule.</h2>
             </div>
-            <p>This section pulls from the shared event data and mirrors the staffing, training, and weekend items that also appear on the calendar and signup pages.</p>
           </div>
           <div class="card-grid" id="home-events"></div>
-        </div>
-      </section>
-
-      <section>
-        <div class="container">
-          <div class="section-heading">
-            <div>
-              <p class="eyebrow">Site Sections</p>
-              <h2>Everything members need in one place.</h2>
-            </div>
-            <p>These pages are already scaffolded and ready for you to fill in with your real club information.</p>
-          </div>
-          <div class="quick-links-grid">
-            <article class="quick-link-card">
-              <h3>Membership Roster</h3>
-              <p>Searchable member table with certification level, contact information, company, class year, and leadership roles.</p>
-              <a class="text-link" href="roster.html">Open roster</a>
-            </article>
-            <article class="quick-link-card">
-              <h3>Operational Calendar</h3>
-              <p>Monthly calendar view for staffing details, training nights, and weekend support events.</p>
-              <a class="text-link" href="calendar.html">Open calendar</a>
-            </article>
-            <article class="quick-link-card">
-              <h3>Signup Hub</h3>
-              <p>Dedicated page for SignupGenius links and future automation ideas for syncing staffing data.</p>
-              <a class="text-link" href="signup.html">Open signups</a>
-            </article>
-            <article class="quick-link-card">
-              <h3>Photo Gallery</h3>
-              <p>Professional gallery layout for event coverage, training imagery, team portraits, and outreach photos.</p>
-              <a class="text-link" href="gallery.html">Open gallery</a>
-            </article>
-            <article class="quick-link-card">
-              <h3>Leadership Structure</h3>
-              <p>Wire-diagram style organizational layout with role titles, contact info, and chain-of-command clarity.</p>
-              <a class="text-link" href="leadership.html">Open leadership</a>
-            </article>
-            <article class="quick-link-card">
-              <h3>Documents Library</h3>
-              <p>Central location for SOPs, training manuals, onboarding packets, and administrative references.</p>
-              <a class="text-link" href="documents.html">Open documents</a>
-            </article>
-          </div>
-        </div>
-      </section>
-
-      <section>
-        <div class="container split-grid">
-          <article class="note-card">
-            <span class="page-accent">Headquarters</span>
-            <h3>Club Contact Block</h3>
-            <p>Use this space later for your official club email, your operations location, and any public-facing points of contact.</p>
-            <div class="key-list">
-              <span>Email: cems@institution.edu</span>
-              <span>Phone: (555) 010-2026</span>
-              <span>Location: Replace with your space</span>
-            </div>
-          </article>
-          <article class="note-card">
-            <span class="page-accent">Hosting</span>
-            <h3>Ready for GitHub Pages</h3>
-            <p>This site is fully static, so it will deploy cleanly through GitHub Pages without any extra build step. You can keep editing the HTML, CSS, and shared data file as the club grows.</p>
-          </article>
         </div>
       </section>
     </main>
@@ -211,7 +80,8 @@
     </footer>
   </div>
 
-  <script src="assets/js/data.js"></script>
-  <script src="assets/js/site.js"></script>
+  <script src="assets/js/supabase-config.js"></script>
+  <script type="module" src="assets/js/auth-guard.js"></script>
 </body>
 </html>
+

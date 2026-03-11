@@ -1,10 +1,10 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>CEMS | Member and Staff Portal</title>
-  <meta name="description" content="Member and staff login portal for the CEMS protected roster.">
+  <meta name="description" content="Member and staff login portal for the protected CEMS site.">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600;700&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -36,33 +36,7 @@
     </header>
 
     <main>
-      <section class="page-banner">
-        <div class="container page-panel">
-          <span class="page-accent">Member and Staff Portal</span>
-          <div class="page-intro">
-            <div>
-              <p class="eyebrow">Supabase Authentication</p>
-              <h1>Choose the access path you need.</h1>
-            </div>
-            <p>
-              Both login paths use Supabase authentication. Member accounts get read-only roster access. Staff accounts use the same authentication system,
-              but their role is elevated in Supabase so they can manage the roster directly on the site.
-            </p>
-          </div>
-        </div>
-      </section>
-
-      <section>
-        <div class="container auth-summary-shell">
-          <div class="status-banner" id="auth-message" hidden></div>
-          <div class="auth-session-card" id="auth-session" hidden>
-            <div id="auth-session-copy"></div>
-            <div class="button-row" id="auth-session-actions"></div>
-          </div>
-        </div>
-      </section>
-
-      <section>
+      <section class="portal-login-section">
         <div class="container auth-grid">
           <article class="auth-card">
             <h2>Member Login</h2>
@@ -98,6 +72,17 @@
         </div>
       </section>
 
+      <section class="portal-status-section">
+        <div class="container auth-summary-shell">
+          <div class="status-banner" id="auth-message" hidden></div>
+          <div class="auth-session-card" id="auth-session" hidden>
+            <div id="auth-session-copy"></div>
+            <div class="button-row" id="auth-session-actions"></div>
+          </div>
+        </div>
+      </section>
+
+      
     </main>
 
     <footer class="site-footer">
@@ -113,3 +98,4 @@
   <script type="module" src="assets/js/portal.js"></script>
 </body>
 </html>
+

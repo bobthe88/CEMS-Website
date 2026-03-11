@@ -1,15 +1,20 @@
-﻿import {
-  getSessionContext,
+import {
   getSupabaseConfig,
   isSupabaseConfigured,
   onAuthStateChange,
   signInWithPassword,
   signOutCurrentUser,
+  stashPendingSession,
+  waitForSessionContext,
 } from "./supabase-client.js";
 
 const state = {
   busy: false,
 };
+
+const authReturnStorageKey = "cems-auth-return";
+const postLoginPathStorageKey = "cems-post-login-path";
+const defaultProtectedPath = "index.html";
 
 const messageShell = document.getElementById("auth-message");
 const sessionShell = document.getElementById("auth-session");
@@ -18,6 +23,50 @@ const sessionActions = document.getElementById("auth-session-actions");
 const logoutButtons = document.querySelectorAll("[data-logout]");
 const signInForms = document.querySelectorAll("[data-login-form]");
 const configTargets = document.querySelectorAll("[data-supabase-config-target]");
+
+function sanitizePath(value) {
+  if (!value || typeof value !== "string") {
+    return "";
+  }
+
+  const trimmed = value.trim();
+
+  if (!trimmed || !/^[A-Za-z0-9._/?#=&%-]+$/.test(trimmed) || trimmed.startsWith("/")) {
+    return "";
+  }
+
+  return trimmed;
+}
+
+function getRequestedPath() {
+  const fromQuery = sanitizePath(new URLSearchParams(window.location.search).get("next"));
+
+  if (fromQuery && window.sessionStorage) {
+    window.sessionStorage.setItem(postLoginPathStorageKey, fromQuery);
+  }
+
+  if (fromQuery) {
+    return fromQuery;
+  }
+
+  if (window.sessionStorage) {
+    const storedPath = sanitizePath(window.sessionStorage.getItem(postLoginPathStorageKey));
+
+    if (storedPath) {
+      return storedPath;
+    }
+  }
+
+  return sanitizePath(getSupabaseConfig().portalRedirect) || defaultProtectedPath;
+}
+
+function clearAuthRedirectState() {
+  if (!window.sessionStorage) {
+    return;
+  }
+
+  window.sessionStorage.removeItem(authReturnStorageKey);
+}
 
 function setBusy(isBusy) {
   state.busy = isBusy;
@@ -67,14 +116,17 @@ function renderSession(context) {
     return;
   }
 
+  const returnTarget = getRequestedPath();
+  const actionLabel = returnTarget === defaultProtectedPath ? "Open site" : "Continue";
+
   sessionShell.hidden = false;
   sessionCopy.innerHTML = `
     <span class="page-accent">Signed In</span>
     <h3>${context.user.email}</h3>
-    <p>You are signed in with <strong>${context.role}</strong> access. Members can view the protected roster. Staff can also create, edit, and delete roster records.</p>
+    <p>You are signed in with <strong>${context.role}</strong> access. Members can browse the protected site. Staff can also create, edit, and delete roster records.</p>
   `;
   sessionActions.innerHTML = `
-    <a class="button button-primary" href="roster.html">Open roster</a>
+    <a class="button button-primary" href="${returnTarget}">${actionLabel}</a>
     <button class="button button-secondary" type="button" data-logout-inline>Sign out</button>
   `;
 
@@ -93,6 +145,7 @@ async function handleLogout() {
     return;
   }
 
+  clearAuthRedirectState();
   setMessage("You have been signed out.", "success");
   await refreshSession();
 }
@@ -108,13 +161,13 @@ async function refreshSession() {
   }
 
   try {
-    const context = await getSessionContext();
+    const context = await waitForSessionContext();
     renderSession(context);
 
     if (!context.user) {
-      setMessage("Use the member login for read-only access or the staff login for roster management.", "info");
+      setMessage("Use the member login to open the protected site or the staff login for roster management.", "info");
     } else {
-      setMessage("You are already signed in. You can continue to the roster now.", "success");
+      setMessage("You are already signed in. You can continue to the protected site now.", "success");
     }
   } catch (error) {
     setMessage(error.message || "Unable to read the current session.", "error");
@@ -150,25 +203,29 @@ async function handleLoginSubmit(event) {
   setMessage(`Signing in to the ${expectedRole} portal...`, "info");
 
   try {
-    const { error } = await signInWithPassword(email, password);
+    const { data, error } = await signInWithPassword(email, password);
 
     if (error) {
       throw error;
     }
 
-    const context = await getSessionContext();
-
-    if (expectedRole === "staff" && context.role !== "staff") {
-      await signOutCurrentUser();
-      throw new Error("This account is not marked as staff in Supabase. Promote the user in public.user_profiles before using the staff portal.");
+    if (!data?.session && !data?.user) {
+      throw new Error("Supabase did not return a usable session. Check whether email confirmation is required for this account in the Supabase Auth settings.");
     }
 
-    setMessage("Authentication successful. Redirecting to the roster...", "success");
-    renderSession(context);
+    if (data?.session) {
+      stashPendingSession(data.session);
+    }
+
+    const returnTarget = getRequestedPath();
+
+    setMessage("Authentication successful. Redirecting to the protected site...", "success");
+    window.sessionStorage.setItem(authReturnStorageKey, "1");
+    window.sessionStorage.setItem(postLoginPathStorageKey, returnTarget);
 
     window.setTimeout(() => {
-      window.location.href = getSupabaseConfig().portalRedirect || "roster.html";
-    }, 600);
+      window.location.href = returnTarget;
+    }, 250);
   } catch (error) {
     setMessage(error.message || "Unable to sign in right now.", "error");
   } finally {
@@ -194,4 +251,6 @@ onAuthStateChange(() => {
 });
 
 renderConfigHints();
+getRequestedPath();
 refreshSession();
+

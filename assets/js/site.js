@@ -1,4 +1,4 @@
-﻿function parseISODate(dateString) {
+function parseISODate(dateString) {
   const [year, month, day] = dateString.split("-").map(Number);
   return new Date(year, month - 1, day);
 }
@@ -54,7 +54,7 @@ function createContactMarkup(value, className) {
   return `<span${cssClass}>${value}</span>`;
 }
 
-document.addEventListener("DOMContentLoaded", () => {
+function initializeSite() {
   initializeNavigation();
   initializeFooter();
 
@@ -75,7 +75,13 @@ document.addEventListener("DOMContentLoaded", () => {
   initializeGallery(data);
   initializeLeadership(data);
   initializeDocuments(data);
-});
+}
+
+if (document.readyState === "loading") {
+  document.addEventListener("DOMContentLoaded", initializeSite, { once: true });
+} else {
+  initializeSite();
+}
 
 function initializeNavigation() {
   const body = document.body;
@@ -83,14 +89,12 @@ function initializeNavigation() {
   const nav = document.querySelector(".site-nav");
   const toggle = document.querySelector(".nav-toggle");
 
-  if (nav && !nav.querySelector('[data-page="portal"]')) {
+  if (nav && !nav.querySelector("[data-page='portal']")) {
     const portalLink = document.createElement("a");
     portalLink.href = "portal.html";
     portalLink.dataset.page = "portal";
-    portalLink.textContent = "Portal";
-
-    const documentsLink = nav.querySelector('[data-page="documents"]');
-    nav.insertBefore(portalLink, documentsLink || null);
+    portalLink.textContent = "Account";
+    nav.appendChild(portalLink);
   }
 
   const navLinks = document.querySelectorAll(".site-nav a");
@@ -480,5 +484,4 @@ function initializeDocuments(data) {
     )
     .join("");
 }
-
 

@@ -1,12 +1,14 @@
-﻿import {
+import {
   createRosterMember,
   deleteRosterMember,
   fetchRosterMembers,
   getSessionContext,
   isSupabaseConfigured,
   onAuthStateChange,
+  signInWithPassword,
   signOutCurrentUser,
   updateRosterMember,
+  waitForSessionContext,
 } from "./supabase-client.js";
 
 const state = {
@@ -16,19 +18,24 @@ const state = {
   },
   members: [],
   editingId: null,
-  busy: false,
+  formBusy: false,
+  loginBusy: false,
 };
 
 const authMessage = document.getElementById("roster-auth-message");
-const accessBadge = document.getElementById("roster-access-badge");
-const accessSummary = document.getElementById("roster-access-summary");
-const accessActions = document.getElementById("roster-access-actions");
+const loginShell = document.getElementById("roster-staff-login-shell");
+const sessionShell = document.getElementById("roster-staff-session-shell");
+const sessionBadge = document.getElementById("roster-session-badge");
+const sessionTitle = document.getElementById("roster-session-title");
+const sessionCopy = document.getElementById("roster-session-copy");
+const loginForm = document.getElementById("roster-login-form");
+const loginSubmit = document.getElementById("roster-login-submit");
+const metricsShell = document.getElementById("roster-metrics-shell");
+const protectedShell = document.getElementById("roster-protected-shell");
 const searchInput = document.getElementById("roster-search");
 const certificationFilter = document.getElementById("cert-filter");
 const rosterBody = document.getElementById("roster-body");
 const rosterEmpty = document.getElementById("roster-empty");
-const protectedShell = document.getElementById("roster-protected-shell");
-const lockedShell = document.getElementById("roster-locked-shell");
 const adminShell = document.getElementById("staff-admin-shell");
 const adminForm = document.getElementById("staff-member-form");
 const formTitle = document.getElementById("staff-form-title");
@@ -42,8 +49,15 @@ function setMessage(text, tone = "info") {
     return;
   }
 
-  authMessage.hidden = !text;
-  authMessage.textContent = text || "";
+  if (!text) {
+    authMessage.hidden = true;
+    authMessage.textContent = "";
+    authMessage.className = "status-banner";
+    return;
+  }
+
+  authMessage.hidden = false;
+  authMessage.textContent = text;
   authMessage.className = `status-banner ${tone}`;
 }
 
@@ -59,21 +73,32 @@ function normalizeMember(member) {
   };
 }
 
+function escapeHtml(value) {
+  return String(value || "")
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/\"/g, "&quot;")
+    .replace(/'/g, "&#39;");
+}
+
 function createContactMarkup(value) {
   if (!value) {
     return "";
   }
 
+  const safeValue = escapeHtml(value);
+
   if (value.includes("@")) {
-    return `<a class="table-link" href="mailto:${value}">${value}</a>`;
+    return `<a class="table-link" href="mailto:${encodeURIComponent(value)}">${safeValue}</a>`;
   }
 
   const digits = value.replace(/[^0-9]/g, "");
   if (digits.length >= 10) {
-    return `<a class="table-link" href="tel:${digits}">${value}</a>`;
+    return `<a class="table-link" href="tel:${digits}">${safeValue}</a>`;
   }
 
-  return value;
+  return safeValue;
 }
 
 function slugify(value) {
@@ -83,6 +108,85 @@ function slugify(value) {
     .replace(/^-+|-+$/g, "");
 
   return /^[0-9]/.test(slug) ? `tag-${slug}` : slug;
+}
+
+function getCurrentAccessLabel() {
+  if (state.context.role === "staff") {
+    return "Staff";
+  }
+
+  if (state.context.role === "member") {
+    return "Member";
+  }
+
+  return "Locked";
+}
+
+function setElementVisible(element, isVisible) {
+  if (!element) {
+    return;
+  }
+
+  element.hidden = !isVisible;
+  element.setAttribute("aria-hidden", String(!isVisible));
+  element.style.display = isVisible ? "" : "none";
+}
+
+function renderStaffAuth() {
+  const hasUser = Boolean(state.context.user);
+  const isStaff = state.context.role === "staff";
+
+  setElementVisible(loginShell, !hasUser);
+  setElementVisible(sessionShell, hasUser);
+
+  if (!hasUser || !sessionTitle || !sessionCopy) {
+    if (sessionBadge) {
+      sessionBadge.textContent = "";
+    }
+
+    if (sessionTitle) {
+      sessionTitle.textContent = "";
+    }
+
+    if (sessionCopy) {
+      sessionCopy.textContent = "";
+    }
+
+    return;
+  }
+
+  const email = state.context.user?.email || "This account";
+
+  if (isStaff) {
+    if (sessionBadge) {
+      sessionBadge.textContent = "Staff Session";
+      sessionBadge.className = "page-accent staff-accent";
+    }
+
+    sessionTitle.textContent = "Editing enabled.";
+    sessionCopy.textContent = `${email} is signed in as staff. You can add, edit, and remove roster members above.`;
+    return;
+  }
+
+  if (sessionBadge) {
+    sessionBadge.textContent = "Member Session";
+    sessionBadge.className = "page-accent member-accent";
+  }
+
+  sessionTitle.textContent = "Viewing enabled.";
+  sessionCopy.textContent = `${email} is signed in as a member. The roster is available in view-only mode until a staff account signs in.`;
+}
+
+function setPageUi(isStaff) {
+  metricsShell.hidden = false;
+  protectedShell.hidden = false;
+  adminShell.hidden = !isStaff;
+
+  if (staffActionsHeader) {
+    staffActionsHeader.hidden = !isStaff;
+  }
+
+  renderStaffAuth();
 }
 
 function getFilteredMembers() {
@@ -114,8 +218,7 @@ function renderMetrics(filteredMembers) {
 
   const uniqueCertifications = [...new Set(state.members.map((member) => member.certification))].filter(Boolean);
   document.getElementById("roster-certifications").textContent = String(uniqueCertifications.length);
-  document.getElementById("roster-access-level").textContent =
-    state.context.role === "staff" ? "Staff" : state.context.role === "member" ? "Member" : "Locked";
+  document.getElementById("roster-access-level").textContent = getCurrentAccessLabel();
 }
 
 function renderCertificationOptions() {
@@ -150,8 +253,8 @@ function renderRoster() {
         ? `
           <td>
             <div class="action-cell">
-              <button class="button button-secondary button-small" type="button" data-edit-id="${member.id}">Edit</button>
-              <button class="button button-secondary button-small danger-button" type="button" data-delete-id="${member.id}">Delete</button>
+              <button class="button button-secondary button-small" type="button" data-edit-id="${escapeHtml(member.id)}">Edit</button>
+              <button class="button button-secondary button-small danger-button" type="button" data-delete-id="${escapeHtml(member.id)}">Delete</button>
             </div>
           </td>
         `
@@ -159,12 +262,12 @@ function renderRoster() {
 
       return `
         <tr>
-          <td>${member.name}</td>
-          <td><span class="category-badge ${slugify(member.certification)}">${member.certification}</span></td>
+          <td>${escapeHtml(member.name)}</td>
+          <td><span class="category-badge ${slugify(member.certification)}">${escapeHtml(member.certification)}</span></td>
           <td>${createContactMarkup(member.contact)}</td>
-          <td>${member.company}</td>
-          <td>${member.class_year}</td>
-          <td>${member.leadership}</td>
+          <td>${escapeHtml(member.company)}</td>
+          <td>${escapeHtml(member.class_year)}</td>
+          <td>${escapeHtml(member.leadership)}</td>
           ${actionCell}
         </tr>
       `;
@@ -190,6 +293,10 @@ function resetForm() {
 }
 
 function startEditing(memberId) {
+  if (state.context.role !== "staff") {
+    return;
+  }
+
   const member = state.members.find((entry) => entry.id === memberId);
   if (!member) {
     return;
@@ -209,8 +316,8 @@ function startEditing(memberId) {
   adminForm.scrollIntoView({ behavior: "smooth", block: "start" });
 }
 
-function setBusy(isBusy) {
-  state.busy = isBusy;
+function setEditorBusy(isBusy) {
+  state.formBusy = isBusy;
   formSubmit.disabled = isBusy;
   formSubmit.textContent = isBusy
     ? state.editingId
@@ -221,69 +328,29 @@ function setBusy(isBusy) {
       : "Save member";
 }
 
-function renderAccessState() {
-  const isAuthenticated = Boolean(state.context.user);
-  const isStaff = state.context.role === "staff";
-
-  protectedShell.hidden = !isAuthenticated;
-  lockedShell.hidden = isAuthenticated;
-  adminShell.hidden = !isStaff;
-  if (staffActionsHeader) {
-    staffActionsHeader.hidden = !isStaff;
-  }
-
-  accessBadge.textContent = isAuthenticated
-    ? isStaff
-      ? "Staff Access"
-      : "Member Access"
-    : "Login Required";
-  accessBadge.className = `page-accent ${isStaff ? "staff-accent" : isAuthenticated ? "member-accent" : ""}`.trim();
-
-  if (!isAuthenticated) {
-    accessSummary.textContent =
-      "The roster is now protected behind Supabase authentication. Members can view the directory after signing in. Staff can also edit it directly on the site.";
-    accessActions.innerHTML = '<a class="button button-primary" href="portal.html">Open member and staff portal</a>';
-    return;
-  }
-
-  accessSummary.textContent = isStaff
-    ? `Signed in as ${state.context.user.email}. Staff accounts can create, update, and delete roster records.`
-    : `Signed in as ${state.context.user.email}. Member accounts have read-only access to the protected roster.`;
-  accessActions.innerHTML = `
-    <a class="button button-secondary" href="portal.html">Back to portal</a>
-    <button class="button button-primary" type="button" data-inline-logout>Sign out</button>
-  `;
-
-  const inlineLogout = accessActions.querySelector("[data-inline-logout]");
-  if (inlineLogout) {
-    inlineLogout.addEventListener("click", handleLogout);
-  }
+function setLoginBusy(isBusy) {
+  state.loginBusy = isBusy;
+  loginSubmit.disabled = isBusy;
+  loginSubmit.textContent = isBusy ? "Signing In..." : "Sign in as staff";
 }
 
-async function loadRoster() {
-  if (!state.context.user) {
-    state.members = [];
-    renderRoster();
-    return;
-  }
+async function loadRoster(options = {}) {
+  const preserveMessage = Boolean(options.preserveMessage);
 
   try {
-    setMessage("Loading roster from Supabase...", "info");
     const rows = await fetchRosterMembers();
     state.members = rows.map(normalizeMember);
     renderCertificationOptions();
     renderRoster();
-    setMessage(
-      state.context.role === "staff"
-        ? "Roster loaded. Staff controls are ready below."
-        : "Roster loaded. You have read-only member access.",
-      "success"
-    );
+
+    if (!preserveMessage) {
+      setMessage("");
+    }
   } catch (error) {
-    setMessage(
-      error.message || "Unable to load the roster. Double-check your Supabase tables and RLS policies.",
-      "error"
-    );
+    const guestFallback = "Unable to load the protected roster. Sign in again or check your Supabase authentication setup.";
+    const memberFallback = "Unable to load the roster. Double-check your Supabase tables and member access policies.";
+
+    setMessage(error.message || (state.context.user ? memberFallback : guestFallback), "error");
     state.members = [];
     renderCertificationOptions();
     renderRoster();
@@ -321,7 +388,7 @@ async function handleDelete(memberId) {
 async function handleSave(event) {
   event.preventDefault();
 
-  if (state.context.role !== "staff" || state.busy) {
+  if (state.context.role !== "staff" || state.formBusy) {
     return;
   }
 
@@ -340,7 +407,7 @@ async function handleSave(event) {
   }
 
   try {
-    setBusy(true);
+    setEditorBusy(true);
     setMessage(state.editingId ? "Updating roster member..." : "Creating roster member...", "info");
 
     if (state.editingId) {
@@ -361,7 +428,68 @@ async function handleSave(event) {
   } catch (error) {
     setMessage(error.message || "Unable to save that roster entry.", "error");
   } finally {
-    setBusy(false);
+    setEditorBusy(false);
+  }
+}
+
+async function handleLogin(event) {
+  event.preventDefault();
+
+  if (state.loginBusy) {
+    return;
+  }
+
+  const email = loginForm.elements.email.value.trim();
+  const password = loginForm.elements.password.value;
+
+  if (!email || !password) {
+    setMessage("Enter both your email and password.", "warning");
+    return;
+  }
+
+  if (!isSupabaseConfigured()) {
+    setMessage(
+      "Supabase is not configured yet. Update assets/js/supabase-config.js first.",
+      "warning"
+    );
+    return;
+  }
+
+  try {
+    setLoginBusy(true);
+    setMessage("Signing in to staff tools...", "info");
+
+    const { data, error } = await signInWithPassword(email, password);
+
+    if (error) {
+      throw error;
+    }
+
+    if (!data?.session && !data?.user) {
+      throw new Error("Supabase did not return a usable session. Check your Auth settings for this account.");
+    }
+
+    const context = await waitForSessionContext();
+
+    if (!context.user) {
+      throw new Error("Login succeeded, but the browser session was not available yet. Try again once or refresh the page.");
+    }
+
+    state.context = context;
+    loginForm.reset();
+    resetForm();
+    setPageUi(context.role === "staff");
+    await loadRoster({ preserveMessage: true });
+
+    if (context.role === "staff") {
+      setMessage("Staff login successful. Editing is enabled.", "success");
+    } else {
+      setMessage("This account is signed in, but it does not have staff permissions. The roster remains view-only.", "warning");
+    }
+  } catch (error) {
+    setMessage(error.message || "Unable to sign in right now.", "error");
+  } finally {
+    setLoginBusy(false);
   }
 }
 
@@ -374,14 +502,23 @@ async function handleLogout() {
     return;
   }
 
-  window.location.href = "portal.html";
+  state.context = {
+    user: null,
+    role: "guest",
+  };
+  loginForm.reset();
+  resetForm();
+  setPageUi(false);
+  window.location.replace("portal.html");
 }
 
 async function initializePage() {
+  renderCertificationOptions();
+  renderRoster();
+  resetForm();
+  setPageUi(false);
+
   if (!isSupabaseConfigured()) {
-    renderAccessState();
-    protectedShell.hidden = true;
-    lockedShell.hidden = false;
     setMessage(
       "Supabase is not configured yet. Update assets/js/supabase-config.js with your project URL and publishable or anon key first.",
       "warning"
@@ -391,47 +528,31 @@ async function initializePage() {
 
   try {
     state.context = await getSessionContext();
-    renderAccessState();
-    renderCertificationOptions();
-
-    if (!state.context.user) {
-      setMessage("Sign in through the portal to access the protected roster.", "info");
-      renderRoster();
-      return;
-    }
-
+    setPageUi(state.context.role === "staff");
     await loadRoster();
   } catch (error) {
-    setMessage(error.message || "Unable to initialize the protected roster.", "error");
+    setPageUi(false);
+    setMessage(error.message || "Unable to initialize the roster.", "error");
   }
 }
 
 searchInput.addEventListener("input", renderRoster);
 certificationFilter.addEventListener("change", renderRoster);
+loginForm.addEventListener("submit", handleLogin);
 adminForm.addEventListener("submit", handleSave);
 cancelEdit.addEventListener("click", resetForm);
 logoutButtons.forEach((button) => button.addEventListener("click", handleLogout));
 
 onAuthStateChange(async (context) => {
   state.context = context;
-  resetForm();
-  renderAccessState();
 
-  if (context.user) {
-    await loadRoster();
-  } else {
-    state.members = [];
-    renderCertificationOptions();
-    renderRoster();
+  if (context.role !== "staff") {
+    resetForm();
   }
+
+  setPageUi(context.role === "staff");
+  await loadRoster({ preserveMessage: true });
 });
 
-resetForm();
-renderCertificationOptions();
-renderRoster();
 initializePage();
-
-
-
-
 
