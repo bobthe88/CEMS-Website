@@ -1,22 +1,22 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>CEMS | Calendar</title>
-  <meta name="description" content="Operational calendar for CEMS staffing, training, and weekend events.">
+  <meta name="description" content="Operational calendar for CEMS with member viewing and staff-only editing powered by Supabase.">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600;700&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="assets/css/styles.css">
 </head>
-<body data-page="calendar" data-requires-auth="member" data-auth-state="pending" aria-busy="true">
+<body data-page="calendar" data-calendar-mode="supabase" data-requires-auth="member" data-auth-state="pending" aria-busy="true">
   <div class="page-shell">
     <header class="site-header">
       <div class="top-stripe"></div>
       <div class="container nav-shell">
         <a class="brand" href="index.html">
-                    <span class="brand-mark">
+          <span class="brand-mark">
             <img src="assets/images/CES%20Logo%20(1).png" alt="CEMS logo">
           </span>
           <span class="brand-text">
@@ -47,21 +47,48 @@
               <h1>Track staffing, training, and weekend support.</h1>
             </div>
             <p>
-              This page gives you a clean monthly calendar backed by the same event data that feeds the homepage and signup page.
-              It is a good fit for event coverage schedules, recurring training nights, and weekend duty windows.
+              Signed-in members can review the shared event schedule here. Staff can manage calendar events below,
+              and those changes will also drive the homepage upcoming cards and the signup opportunities page.
             </p>
           </div>
         </div>
       </section>
 
-      <section>
+      <section class="calendar-message-section">
+        <div class="container">
+          <div class="status-banner" id="calendar-auth-message" hidden></div>
+        </div>
+      </section>
+
+      <section class="calendar-metrics-section">
+        <div class="container metrics-grid">
+          <article class="metric-card">
+            <strong id="calendar-total">0</strong>
+            <span>Total Events</span>
+          </article>
+          <article class="metric-card">
+            <strong id="calendar-month-total">0</strong>
+            <span>This Month</span>
+          </article>
+          <article class="metric-card">
+            <strong id="calendar-open-signups">0</strong>
+            <span>Open Signups</span>
+          </article>
+          <article class="metric-card">
+            <strong id="calendar-access-level">Member</strong>
+            <span>Current Access</span>
+          </article>
+        </div>
+      </section>
+
+      <section class="calendar-main-section">
         <div class="container calendar-shell">
           <div class="section-heading">
             <div>
               <p class="eyebrow">Monthly View</p>
               <h2>Mission schedule at a glance.</h2>
             </div>
-            <p>Use this page for the club schedule today, or later swap in a live embedded calendar if you move to Google Calendar or another source.</p>
+            <p>Staffing requirements, training nights, and weekend events all pull from the same live Supabase schedule.</p>
           </div>
 
           <div class="calendar-layout">
@@ -104,17 +131,109 @@
         </div>
       </section>
 
+      <section class="calendar-admin-section" id="calendar-admin-shell" hidden>
+        <div class="container">
+          <div class="staff-shell">
+            <div class="section-heading compact">
+              <div>
+                <p class="eyebrow">Staff Controls</p>
+                <h2 id="calendar-form-title">Add calendar event</h2>
+              </div>
+            </div>
+
+            <form class="staff-form-grid" id="calendar-event-form">
+              <div class="field">
+                <label for="calendar-event-title">Event Title</label>
+                <input id="calendar-event-title" name="title" type="text" required>
+              </div>
+              <div class="field">
+                <label for="calendar-event-date">Date</label>
+                <input id="calendar-event-date" name="date" type="date" required>
+              </div>
+              <div class="field">
+                <label for="calendar-event-start">Start Time</label>
+                <input id="calendar-event-start" name="start_time" type="time">
+              </div>
+              <div class="field">
+                <label for="calendar-event-end">End Time</label>
+                <input id="calendar-event-end" name="end_time" type="time">
+              </div>
+              <div class="field">
+                <label for="calendar-event-location">Location</label>
+                <input id="calendar-event-location" name="location" type="text" required>
+              </div>
+              <div class="field">
+                <label for="calendar-event-category">Category</label>
+                <select id="calendar-event-category" name="category">
+                  <option value="Staffing">Staffing</option>
+                  <option value="Training">Training</option>
+                  <option value="Weekend">Weekend</option>
+                </select>
+              </div>
+              <div class="field field-span-2">
+                <label for="calendar-event-description">Description</label>
+                <textarea id="calendar-event-description" name="description" rows="4" required></textarea>
+              </div>
+              <div class="field field-span-2 checkbox-field">
+                <label class="inline-checkbox" for="calendar-signup-open">
+                  <input id="calendar-signup-open" name="signup_open" type="checkbox">
+                  <span>Show this event on the signup page</span>
+                </label>
+              </div>
+              <div class="field field-span-2" id="calendar-signup-url-shell" hidden>
+                <label for="calendar-signup-url">Signup URL</label>
+                <input id="calendar-signup-url" name="signup_url" type="url" placeholder="https://www.signupgenius.com/">
+              </div>
+              <div class="button-row staff-form-actions">
+                <button class="button button-primary" id="calendar-form-submit" type="submit">Save event</button>
+                <button class="button button-secondary" id="calendar-cancel-edit" type="button" hidden>Cancel edit</button>
+              </div>
+            </form>
+          </div>
+        </div>
+      </section>
+
+      <section class="calendar-session-section">
+        <div class="container login-stack">
+          <article class="auth-card roster-login-card" id="calendar-session-shell" hidden aria-hidden="true" style="display: none;">
+            <span class="page-accent member-accent" id="calendar-session-badge"></span>
+            <h2 id="calendar-session-title"></h2>
+            <p id="calendar-session-copy"></p>
+            <div class="button-row">
+              <button class="button button-secondary" type="button" data-calendar-logout>Log out</button>
+            </div>
+          </article>
+
+          <article class="auth-card roster-login-card" id="calendar-staff-login-shell" hidden aria-hidden="true" style="display: none;">
+            <span class="page-accent staff-accent">Staff Login</span>
+            <h2>Need to edit the calendar?</h2>
+            <p>Sign in with a staff account to add, edit, or remove events. Those changes will sync to the homepage and signup page automatically.</p>
+            <form class="auth-form" id="calendar-login-form">
+              <div class="field">
+                <label for="calendar-email">Email</label>
+                <input id="calendar-email" name="email" type="email" autocomplete="email" required>
+              </div>
+              <div class="field">
+                <label for="calendar-password">Password</label>
+                <input id="calendar-password" name="password" type="password" autocomplete="current-password" required>
+              </div>
+              <button class="button button-primary" id="calendar-login-submit" type="submit">Sign in as staff</button>
+            </form>
+          </article>
+        </div>
+      </section>
+
       <section>
         <div class="container split-grid">
           <article class="note-card">
-            <span class="page-accent">Future Option</span>
-            <h3>Embed a live calendar later</h3>
-            <p>If your club starts using Google Calendar, you can replace or supplement this static calendar with an embedded live calendar while keeping the same visual style.</p>
+            <span class="page-accent">Shared Feed</span>
+            <h3>One schedule now drives three pages</h3>
+            <p>Events created here populate the homepage upcoming section, the full calendar, and the signup opportunities list from the same source.</p>
           </article>
           <article class="note-card">
             <span class="page-accent">Planning Use</span>
             <h3>Good fit for three event types</h3>
-            <p>Staffing requirements, training nights, and weekend events are already treated as separate categories so they remain easy to scan across the month.</p>
+            <p>Staffing requirements, training nights, and weekend events stay separated into clean categories so the month remains easy to scan.</p>
           </article>
         </div>
       </section>
@@ -123,7 +242,7 @@
     <footer class="site-footer">
       <div class="container footer-shell">
         <p><strong>CEMS</strong> | Cadet Emergency Medical Services</p>
-        <p>Calendar events are managed in <code>assets/js/data.js</code>. <span data-current-year></span></p>
+        <p>Calendar events are managed in Supabase and synced across the member pages. <span data-current-year></span></p>
       </div>
     </footer>
   </div>
@@ -132,5 +251,3 @@
   <script type="module" src="assets/js/auth-guard.js"></script>
 </body>
 </html>
-
-

@@ -1,37 +1,37 @@
-# CEMS Website
+﻿# CEMS Website
 
-Static GitHub Pages site for the CEMS club, now upgraded with a member-gated experience and a Supabase-backed roster with staff-only editing.
+Static GitHub Pages site for the CEMS club, upgraded with a Supabase-backed roster and calendar for member access with staff-only editing tools.
 
 ## Current architecture
 
 - The site still uses static HTML, CSS, and JavaScript behind a member login gate
-- The roster uses Supabase database storage with authenticated member read access
-- Staff accounts sign in on the roster page to manage records
-- Staff accounts can add, edit, and delete roster records directly on the site
+- The roster and calendar use Supabase database storage
+- Members can view protected pages after portal sign-in
+- Staff accounts can add, edit, and delete roster members and calendar events directly on the site
 
 ## Main files
 
 - `index.html` protected homepage
+- `calendar.html` protected calendar page with staff editing tools
+- `roster.html` protected roster page with staff editing tools
 - `portal.html` login portal for the protected site
-- `roster.html` member-only roster page with staff editing tools
 - `assets/css/styles.css` shared styling
 - `assets/js/site.js` protected page behavior and shared navigation
-- `assets/js/supabase-config.js` your Supabase project configuration
-- `assets/js/supabase-client.js` shared Supabase helpers
 - `assets/js/auth-guard.js` shared member-login gate for protected pages
 - `assets/js/portal.js` login workflow
-- `assets/js/roster-app.js` member-only roster and staff editing workflow
-- `supabase/setup.sql` tables, policies, trigger, and starter roster seed
+- `assets/js/roster-app.js` roster and staff editing workflow
+- `assets/js/calendar-app.js` calendar and staff editing workflow
+- `assets/js/events-bootstrap.js` live event bootstrap for the homepage and signup page
+- `assets/js/supabase-client.js` shared Supabase helpers
+- `assets/js/supabase-config.js` your Supabase project configuration
+- `supabase/setup.sql` tables, policies, triggers, and starter roster/calendar seed data
 
 ## What changed
 
-The roster is no longer sourced from `assets/js/data.js` on the roster page.
-
-Instead:
-
-- `assets/js/data.js` still supports the protected static pages after login
-- `roster.html` now loads the roster from Supabase for signed-in members and staff
-- staff users can edit roster records from the website itself
+- `roster.html` loads roster members from Supabase for signed-in members
+- `calendar.html` loads calendar events from Supabase and gives staff on-page calendar editing tools
+- the homepage and signup page now pull their event cards from the same Supabase event table
+- `assets/js/data.js` still provides fallback/sample content for the rest of the protected site
 
 ## Supabase setup steps
 
@@ -39,10 +39,9 @@ Instead:
 2. Open the SQL editor in Supabase.
 3. Run `supabase/setup.sql`.
 4. In Supabase Auth, create the member and staff user accounts you want to use.
-5. Re-run `supabase/setup.sql` if you previously enabled public roster viewing, so the authenticated-only policy replaces it.
-6. Promote staff users by updating `public.user_profiles.role` from `member` to `staff`.
-7. Open `assets/js/supabase-config.js` and replace the placeholder values with your project URL and publishable or anon key.
-8. Push the updated site to GitHub Pages.
+5. Promote staff users by updating `public.user_profiles.role` from `member` to `staff`.
+6. Open `assets/js/supabase-config.js` and replace the placeholder values with your project URL and publishable or anon key.
+7. Push the updated site to GitHub Pages.
 
 ## Promoting a staff user
 
@@ -54,9 +53,9 @@ set role = 'staff'
 where email = 'staff.member@westpoint.edu';
 ```
 
-## Roster seed data
+## Seed data
 
-`supabase/setup.sql` seeds the Supabase roster with the same values currently in your roster table, so signed-in members start with the records you already had.
+`supabase/setup.sql` seeds both the roster and calendar tables so the member pages start with working sample data.
 
 ## Important note about keys
 
@@ -76,7 +75,6 @@ Because this project is deployed as a static GitHub Pages site, the login gate p
 ## Next upgrades you could add later
 
 - move more protected content out of static files and into Supabase-backed views
-- add staff management for events and documents
-- move more public stats from `data.js` into Supabase-backed views
+- add staff management for documents
+- add recurring-event helpers for common training or staffing patterns
 - invite-based onboarding for new members
-

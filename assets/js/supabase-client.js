@@ -1,16 +1,46 @@
-import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm";
+﻿import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm";
 
 const rawConfig = window.CEMS_SUPABASE_CONFIG || {};
 const config = {
   url: rawConfig.url || "",
   publishableKey: rawConfig.publishableKey || rawConfig.anonKey || "",
   rosterTable: rawConfig.rosterTable || "roster_members",
+  eventTable: rawConfig.eventTable || "calendar_events",
   profileTable: rawConfig.profileTable || "user_profiles",
   portalRedirect: rawConfig.portalRedirect || "index.html",
 };
 
 function looksConfigured(value) {
   return Boolean(value) && !/YOUR_|REPLACE_|CHANGE_ME/i.test(value);
+}
+
+function normalizeCalendarEvent(row) {
+  return {
+    id: row.id,
+    title: row.title || "",
+    date: row.event_date || "",
+    startTime: row.start_time || "",
+    endTime: row.end_time || "",
+    location: row.location || "",
+    category: row.category || "",
+    description: row.description || "",
+    signupOpen: Boolean(row.signup_open),
+    signupUrl: row.signup_url || "",
+  };
+}
+
+function serializeCalendarEvent(event) {
+  return {
+    title: event.title,
+    event_date: event.date,
+    start_time: event.startTime || null,
+    end_time: event.endTime || null,
+    location: event.location,
+    category: event.category,
+    description: event.description,
+    signup_open: Boolean(event.signupOpen),
+    signup_url: event.signupOpen ? event.signupUrl || "" : "",
+  };
 }
 
 export function isSupabaseConfigured() {
@@ -282,3 +312,77 @@ export async function deleteRosterMember(id) {
   }
 }
 
+export async function fetchCalendarEvents() {
+  const supabase = getSupabaseClient();
+
+  if (!supabase) {
+    throw new Error("Supabase is not configured yet.");
+  }
+
+  const { data, error } = await supabase
+    .from(config.eventTable)
+    .select("id, title, event_date, start_time, end_time, location, category, description, signup_open, signup_url")
+    .order("event_date", { ascending: true })
+    .order("start_time", { ascending: true });
+
+  if (error) {
+    throw error;
+  }
+
+  return (data || []).map(normalizeCalendarEvent);
+}
+
+export async function createCalendarEvent(event) {
+  const supabase = getSupabaseClient();
+
+  if (!supabase) {
+    throw new Error("Supabase is not configured yet.");
+  }
+
+  const { data, error } = await supabase
+    .from(config.eventTable)
+    .insert(serializeCalendarEvent(event))
+    .select("id, title, event_date, start_time, end_time, location, category, description, signup_open, signup_url")
+    .single();
+
+  if (error) {
+    throw error;
+  }
+
+  return normalizeCalendarEvent(data);
+}
+
+export async function updateCalendarEvent(id, event) {
+  const supabase = getSupabaseClient();
+
+  if (!supabase) {
+    throw new Error("Supabase is not configured yet.");
+  }
+
+  const { data, error } = await supabase
+    .from(config.eventTable)
+    .update(serializeCalendarEvent(event))
+    .eq("id", id)
+    .select("id, title, event_date, start_time, end_time, location, category, description, signup_open, signup_url")
+    .single();
+
+  if (error) {
+    throw error;
+  }
+
+  return normalizeCalendarEvent(data);
+}
+
+export async function deleteCalendarEvent(id) {
+  const supabase = getSupabaseClient();
+
+  if (!supabase) {
+    throw new Error("Supabase is not configured yet.");
+  }
+
+  const { error } = await supabase.from(config.eventTable).delete().eq("id", id);
+
+  if (error) {
+    throw error;
+  }
+}

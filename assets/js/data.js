@@ -12,7 +12,7 @@
     return `${year}-${month}-${day}`;
   }
 
-  // Replace the public-site sample records below with your actual club data. The roster page now pulls roster data from Supabase, while the rest of the site still uses the sample content below.
+  // Replace the public-site sample records below with your actual club data. Roster data is loaded from Supabase, and event data is used only as a fallback if the live calendar table is unavailable.
   window.CEMS_DATA = {
     club: {
       shortName: "CEMS",

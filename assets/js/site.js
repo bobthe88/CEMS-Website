@@ -70,7 +70,9 @@ function initializeSite() {
     initializeRoster(data);
   }
 
-  initializeCalendar(data);
+  if (document.body.dataset.calendarMode !== "supabase") {
+    initializeCalendar(data);
+  }
   initializeSignup(data);
   initializeGallery(data);
   initializeLeadership(data);
@@ -86,16 +88,7 @@ if (document.readyState === "loading") {
 function initializeNavigation() {
   const body = document.body;
   const navShell = document.querySelector(".nav-shell");
-  const nav = document.querySelector(".site-nav");
   const toggle = document.querySelector(".nav-toggle");
-
-  if (nav && !nav.querySelector("[data-page='portal']")) {
-    const portalLink = document.createElement("a");
-    portalLink.href = "portal.html";
-    portalLink.dataset.page = "portal";
-    portalLink.textContent = "Account";
-    nav.appendChild(portalLink);
-  }
 
   const navLinks = document.querySelectorAll(".site-nav a");
   const activePage = body.dataset.page;
@@ -484,4 +477,3 @@ function initializeDocuments(data) {
     )
     .join("");
 }
-

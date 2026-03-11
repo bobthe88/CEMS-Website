@@ -1,4 +1,4 @@
-import {
+﻿import {
   isSupabaseConfigured,
   onAuthStateChange,
   restorePendingSession,
@@ -93,7 +93,18 @@ async function loadProtectedPageScripts() {
     return;
   }
 
+  if (page === "calendar") {
+    await loadScript("assets/js/site.js");
+    await loadScript("assets/js/calendar-app.js", { module: true });
+    return;
+  }
+
   await loadScript("assets/js/data.js");
+
+  if (page === "home" || page === "signup") {
+    await loadScript("assets/js/events-bootstrap.js", { module: true });
+  }
+
   await loadScript("assets/js/site.js");
 }
 
@@ -134,4 +145,3 @@ async function initializeGuard() {
 }
 
 initializeGuard();
-
