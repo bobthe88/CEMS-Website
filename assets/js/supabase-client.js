@@ -200,9 +200,11 @@ export function onAuthStateChange(handler) {
     return { data: { subscription: { unsubscribe() {} } } };
   }
 
-  return supabase.auth.onAuthStateChange(async (_event, session) => {
-    const context = await getSessionContext();
-    handler({ ...context, session: session || context.session });
+  return supabase.auth.onAuthStateChange((event, session) => {
+    window.setTimeout(async () => {
+      const context = await getSessionContext();
+      handler({ ...context, event, session: session || context.session });
+    }, 0);
   });
 }
 
@@ -279,6 +281,7 @@ export async function deleteRosterMember(id) {
     throw error;
   }
 }
+
 
 
 
