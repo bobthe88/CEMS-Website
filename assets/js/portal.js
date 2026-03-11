@@ -5,6 +5,7 @@
   onAuthStateChange,
   signInWithPassword,
   signOutCurrentUser,
+  waitForSessionContext,
 } from "./supabase-client.js";
 
 const state = {
@@ -108,7 +109,7 @@ async function refreshSession() {
   }
 
   try {
-    const context = await getSessionContext();
+    const context = await waitForSessionContext();
     renderSession(context);
 
     if (!context.user) {
@@ -156,7 +157,7 @@ async function handleLoginSubmit(event) {
       throw error;
     }
 
-    const context = await getSessionContext();
+    const context = await waitForSessionContext();
 
     if (expectedRole === "staff" && context.role !== "staff") {
       await signOutCurrentUser();
@@ -165,6 +166,8 @@ async function handleLoginSubmit(event) {
 
     setMessage("Authentication successful. Redirecting to the roster...", "success");
     renderSession(context);
+
+    window.sessionStorage.setItem("cems-auth-return", "1");
 
     window.setTimeout(() => {
       window.location.href = getSupabaseConfig().portalRedirect || "roster.html";
@@ -195,3 +198,5 @@ onAuthStateChange(() => {
 
 renderConfigHints();
 refreshSession();
+
+

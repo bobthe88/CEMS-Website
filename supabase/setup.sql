@@ -54,6 +54,12 @@ create trigger on_auth_user_created
   after insert on auth.users
   for each row execute procedure public.handle_new_user();
 
+insert into public.user_profiles (user_id, email, role)
+select id, email, 'member'
+from auth.users
+on conflict (user_id) do update
+set email = excluded.email;
+
 drop trigger if exists set_user_profiles_updated_at on public.user_profiles;
 create trigger set_user_profiles_updated_at
   before update on public.user_profiles
@@ -154,3 +160,4 @@ where not exists (
 -- update public.user_profiles
 -- set role = 'staff'
 -- where email = 'staff.member@westpoint.edu';
+

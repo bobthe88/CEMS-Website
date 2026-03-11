@@ -7,6 +7,7 @@
   onAuthStateChange,
   signOutCurrentUser,
   updateRosterMember,
+  waitForSessionContext,
 } from "./supabase-client.js";
 
 const state = {
@@ -390,7 +391,11 @@ async function initializePage() {
   }
 
   try {
-    state.context = await getSessionContext();
+    const pendingPortalRedirect = window.sessionStorage.getItem("cems-auth-return") === "1";
+    state.context = pendingPortalRedirect
+      ? await waitForSessionContext({ timeoutMs: 3000, intervalMs: 175 })
+      : await getSessionContext();
+    window.sessionStorage.removeItem("cems-auth-return");
     renderAccessState();
     renderCertificationOptions();
 
@@ -430,6 +435,7 @@ resetForm();
 renderCertificationOptions();
 renderRoster();
 initializePage();
+
 
 
 

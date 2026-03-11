@@ -112,6 +112,20 @@ export async function getSessionContext() {
   };
 }
 
+export async function waitForSessionContext(options = {}) {
+  const timeoutMs = options.timeoutMs || 2500;
+  const intervalMs = options.intervalMs || 150;
+  const start = Date.now();
+  let context = await getSessionContext();
+
+  while (!context.user && Date.now() - start < timeoutMs) {
+    await new Promise((resolve) => window.setTimeout(resolve, intervalMs));
+    context = await getSessionContext();
+  }
+
+  return context;
+}
+
 export function onAuthStateChange(handler) {
   const supabase = getSupabaseClient();
 
@@ -198,3 +212,4 @@ export async function deleteRosterMember(id) {
     throw error;
   }
 }
+
