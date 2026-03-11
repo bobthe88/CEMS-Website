@@ -151,27 +151,23 @@ async function handleLoginSubmit(event) {
   setMessage(`Signing in to the ${expectedRole} portal...`, "info");
 
   try {
-    const { error } = await signInWithPassword(email, password);
+    const { data, error } = await signInWithPassword(email, password);
 
     if (error) {
       throw error;
     }
 
-    const context = await waitForSessionContext();
-
-    if (expectedRole === "staff" && context.role !== "staff") {
-      await signOutCurrentUser();
-      throw new Error("This account is not marked as staff in Supabase. Promote the user in public.user_profiles before using the staff portal.");
+    if (!data?.session && !data?.user) {
+      throw new Error("Supabase did not return a usable session. Check whether email confirmation is required for this account in the Supabase Auth settings.");
     }
 
     setMessage("Authentication successful. Redirecting to the roster...", "success");
-    renderSession(context);
-
     window.sessionStorage.setItem("cems-auth-return", "1");
+    window.sessionStorage.setItem("cems-expected-role", expectedRole);
 
     window.setTimeout(() => {
       window.location.href = getSupabaseConfig().portalRedirect || "roster.html";
-    }, 600);
+    }, 250);
   } catch (error) {
     setMessage(error.message || "Unable to sign in right now.", "error");
   } finally {
@@ -198,5 +194,6 @@ onAuthStateChange(() => {
 
 renderConfigHints();
 refreshSession();
+
 
 

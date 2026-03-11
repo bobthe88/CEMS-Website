@@ -392,17 +392,31 @@ async function initializePage() {
 
   try {
     const pendingPortalRedirect = window.sessionStorage.getItem("cems-auth-return") === "1";
+    const expectedRole = window.sessionStorage.getItem("cems-expected-role") || "member";
     state.context = pendingPortalRedirect
       ? await waitForSessionContext({ timeoutMs: 3000, intervalMs: 175 })
       : await getSessionContext();
     window.sessionStorage.removeItem("cems-auth-return");
+    window.sessionStorage.removeItem("cems-expected-role");
     renderAccessState();
     renderCertificationOptions();
 
     if (!state.context.user) {
-      setMessage("Sign in through the portal to access the protected roster.", "info");
+      setMessage(
+        pendingPortalRedirect
+          ? "Login completed, but no browser session was available on the roster page. In Supabase, make sure email confirmation is disabled for password sign-in accounts or confirm the account first."
+          : "Sign in through the portal to access the protected roster.",
+        pendingPortalRedirect ? "warning" : "info"
+      );
       renderRoster();
       return;
+    }
+
+    if (expectedRole === "staff" && state.context.role !== "staff") {
+      setMessage(
+        "This account signed in successfully, but it is not marked as staff in public.user_profiles, so staff controls are hidden.",
+        "warning"
+      );
     }
 
     await loadRoster();
@@ -435,6 +449,7 @@ resetForm();
 renderCertificationOptions();
 renderRoster();
 initializePage();
+
 
 
 
