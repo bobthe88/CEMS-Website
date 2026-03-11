@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>CEMS | Protected Roster</title>
+  <title>CEMS | Roster</title>
   <meta name="description" content="Protected member and staff roster for CEMS with Supabase-backed access control and staff editing tools.">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -36,21 +36,34 @@
     </header>
 
     <main>
-      <section>
-        <div class="container auth-summary-shell">
-          <div class="auth-summary-card">
-            <div>
-              <span class="page-accent" id="roster-access-badge">Login Required</span>
-              <h2>Roster access status</h2>
-            </div>
-            <p id="roster-access-summary">The protected roster checks your Supabase session before loading member data.</p>
-            <div class="button-row" id="roster-access-actions"></div>
-          </div>
+      <section class="roster-message-section">
+        <div class="container">
           <div class="status-banner" id="roster-auth-message" hidden></div>
         </div>
       </section>
 
-      <section>
+      <section class="roster-login-section" id="roster-login-shell">
+        <div class="container login-stack">
+          <article class="auth-card roster-login-card">
+            <span class="page-accent member-accent">Roster Login</span>
+            <h1>Sign in to access the roster.</h1>
+            <p>Staff editing permissions are applied automatically based on the account you use.</p>
+            <form class="auth-form" id="roster-login-form">
+              <div class="field">
+                <label for="roster-email">Email</label>
+                <input id="roster-email" name="email" type="email" autocomplete="email" required>
+              </div>
+              <div class="field">
+                <label for="roster-password">Password</label>
+                <input id="roster-password" name="password" type="password" autocomplete="current-password" required>
+              </div>
+              <button class="button button-primary" id="roster-login-submit" type="submit">Sign in</button>
+            </form>
+          </article>
+        </div>
+      </section>
+
+      <section class="roster-metrics-section" id="roster-metrics-shell" hidden>
         <div class="container metrics-grid">
           <article class="metric-card">
             <strong id="roster-total">0</strong>
@@ -65,43 +78,25 @@
             <span>Certification Types</span>
           </article>
           <article class="metric-card">
-            <strong id="roster-access-level">Locked</strong>
+            <strong id="roster-access-level">Member</strong>
             <span>Current Access</span>
           </article>
         </div>
       </section>
 
-      <section id="roster-locked-shell">
-        <div class="container split-grid">
-          <article class="note-card lock-card">
-            <span class="page-accent">Member Access</span>
-            <h3>Roster viewing is protected</h3>
-            <p>Use the member portal to sign in before accessing the roster. Once signed in, members can search and filter the directory.</p>
-            <a class="button button-primary" href="portal.html">Open member portal</a>
-          </article>
-          <article class="note-card lock-card">
-            <span class="page-accent">Staff Access</span>
-            <h3>Roster editing happens here</h3>
-            <p>Staff accounts can use the staff portal, then come back here to create, update, and remove roster records without editing backend code.</p>
-            <a class="button button-secondary" href="portal.html">Open staff portal</a>
-          </article>
-        </div>
-      </section>
-
-      <section id="roster-protected-shell" hidden>
+      <section class="roster-protected-section" id="roster-protected-shell" hidden>
         <div class="container roster-shell">
-          <div class="section-heading">
+          <div class="section-heading compact">
             <div>
-              <p class="eyebrow">Roster Tools</p>
-              <h2>Search and filter the protected directory.</h2>
+              <p class="eyebrow">Protected Directory</p>
+              <h2>Membership roster.</h2>
             </div>
-            <p>The roster now loads directly from Supabase, so changes made by staff show up without editing <code>data.js</code>.</p>
           </div>
 
           <div class="filter-shell">
             <div class="field">
               <label for="roster-search">Search name, company, contact, class year, or role</label>
-              <input id="roster-search" type="search" placeholder="Search the protected roster">
+              <input id="roster-search" type="search" placeholder="Search the roster">
             </div>
             <div class="field">
               <label for="cert-filter">Filter by certification</label>
@@ -132,12 +127,11 @@
 
         <div class="container" id="staff-admin-shell" hidden>
           <div class="staff-shell">
-            <div class="section-heading">
+            <div class="section-heading compact">
               <div>
                 <p class="eyebrow">Staff Controls</p>
                 <h2 id="staff-form-title">Add roster member</h2>
               </div>
-              <p>These controls only appear for staff accounts. Changes save directly to Supabase and are immediately reflected in the table above.</p>
             </div>
 
             <form class="staff-form-grid" id="staff-member-form">
@@ -173,25 +167,15 @@
               <div class="button-row staff-form-actions">
                 <button class="button button-primary" id="staff-form-submit" type="submit">Save member</button>
                 <button class="button button-secondary" id="staff-cancel-edit" type="button" hidden>Cancel edit</button>
-                <button class="button button-secondary" type="button" data-roster-logout>Sign out</button>
               </div>
             </form>
           </div>
         </div>
-      </section>
 
-      <section>
-        <div class="container split-grid">
-          <article class="note-card">
-            <span class="page-accent">Supabase Setup</span>
-            <h3>Database-backed roster</h3>
-            <p>The roster table now lives in Supabase. Run <code>supabase/setup.sql</code>, then add your project URL and publishable or anon key in <code>assets/js/supabase-config.js</code>.</p>
-          </article>
-          <article class="note-card">
-            <span class="page-accent">Role Model</span>
-            <h3>Members view, staff manage</h3>
-            <p>Member accounts get read-only roster access. Staff accounts are promoted in <code>public.user_profiles</code> and gain create, edit, and delete permissions.</p>
-          </article>
+        <div class="container roster-footer-actions">
+          <div class="button-row">
+            <button class="button button-secondary" type="button" data-roster-logout>Log out</button>
+          </div>
         </div>
       </section>
     </main>
@@ -209,4 +193,3 @@
   <script type="module" src="assets/js/roster-app.js"></script>
 </body>
 </html>
-

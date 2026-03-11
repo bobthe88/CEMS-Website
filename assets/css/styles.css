@@ -1087,3 +1087,47 @@ p {
 
 
 
+
+.roster-message-section {
+  padding-top: 1.1rem;
+  padding-bottom: 0;
+}
+
+.roster-login-section {
+  padding-top: 0.8rem;
+  padding-bottom: 1.2rem;
+}
+
+.login-stack {
+  display: grid;
+  gap: 0.75rem;
+}
+
+.roster-login-card {
+  max-width: 620px;
+  margin: 0 auto;
+}
+
+.roster-metrics-section {
+  padding-top: 0.8rem;
+  padding-bottom: 1.2rem;
+}
+
+.roster-protected-section {
+  padding-top: 0;
+}
+
+.roster-footer-actions {
+  padding-top: 1rem;
+  padding-bottom: 2rem;
+}
+
+.roster-footer-actions .button-row {
+  justify-content: flex-end;
+}
+
+@media (max-width: 620px) {
+  .roster-footer-actions .button-row {
+    justify-content: flex-start;
+  }
+}
