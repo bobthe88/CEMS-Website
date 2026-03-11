@@ -36,33 +36,7 @@
     </header>
 
     <main>
-      <section class="page-banner">
-        <div class="container page-panel">
-          <span class="page-accent">Member and Staff Portal</span>
-          <div class="page-intro">
-            <div>
-              <p class="eyebrow">Supabase Authentication</p>
-              <h1>Choose the access path you need.</h1>
-            </div>
-            <p>
-              Both login paths use Supabase authentication. Member accounts get read-only roster access. Staff accounts use the same authentication system,
-              but their role is elevated in Supabase so they can manage the roster directly on the site.
-            </p>
-          </div>
-        </div>
-      </section>
-
-      <section>
-        <div class="container auth-summary-shell">
-          <div class="status-banner" id="auth-message" hidden></div>
-          <div class="auth-session-card" id="auth-session" hidden>
-            <div id="auth-session-copy"></div>
-            <div class="button-row" id="auth-session-actions"></div>
-          </div>
-        </div>
-      </section>
-
-      <section>
+      <section class="portal-login-section">
         <div class="container auth-grid">
           <article class="auth-card">
             <span class="page-accent member-accent">Member Login</span>
@@ -100,7 +74,17 @@
         </div>
       </section>
 
-      <section>
+      <section class="portal-status-section">
+        <div class="container auth-summary-shell">
+          <div class="status-banner" id="auth-message" hidden></div>
+          <div class="auth-session-card" id="auth-session" hidden>
+            <div id="auth-session-copy"></div>
+            <div class="button-row" id="auth-session-actions"></div>
+          </div>
+        </div>
+      </section>
+
+      <section class="portal-notes-section">
         <div class="container split-grid">
           <article class="note-card">
             <span class="page-accent">Provisioning</span>
@@ -129,3 +113,4 @@
   <script type="module" src="assets/js/portal.js"></script>
 </body>
 </html>
+
