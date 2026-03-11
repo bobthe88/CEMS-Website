@@ -110,18 +110,31 @@ function getCurrentAccessLabel() {
   return "Public";
 }
 
+function setElementVisible(element, isVisible) {
+  if (!element) {
+    return;
+  }
+
+  element.hidden = !isVisible;
+  element.setAttribute("aria-hidden", String(!isVisible));
+  element.style.display = isVisible ? "" : "none";
+}
+
 function renderStaffAuth() {
   const isStaff = state.context.role === "staff";
 
-  if (loginShell) {
-    loginShell.hidden = isStaff;
-  }
-
-  if (sessionShell) {
-    sessionShell.hidden = !isStaff;
-  }
+  setElementVisible(loginShell, !isStaff);
+  setElementVisible(sessionShell, isStaff);
 
   if (!isStaff || !sessionTitle || !sessionCopy) {
+    if (sessionTitle) {
+      sessionTitle.textContent = "";
+    }
+
+    if (sessionCopy) {
+      sessionCopy.textContent = "";
+    }
+
     return;
   }
 
@@ -462,8 +475,7 @@ async function handleLogout() {
   loginForm.reset();
   resetForm();
   setPageUi(false);
-  await loadRoster({ preserveMessage: true });
-  setMessage("You have been signed out. Public roster viewing remains available.", "success");
+  window.location.replace("roster.html");
 }
 
 async function initializePage() {
