@@ -1,4 +1,4 @@
-﻿import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm";
+import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm";
 
 const rawConfig = window.CEMS_SUPABASE_CONFIG || {};
 const config = {
@@ -6,7 +6,7 @@ const config = {
   publishableKey: rawConfig.publishableKey || rawConfig.anonKey || "",
   rosterTable: rawConfig.rosterTable || "roster_members",
   profileTable: rawConfig.profileTable || "user_profiles",
-  portalRedirect: rawConfig.portalRedirect || "roster.html",
+  portalRedirect: rawConfig.portalRedirect || "index.html",
 };
 
 function looksConfigured(value) {
@@ -281,7 +281,4 @@ export async function deleteRosterMember(id) {
     throw error;
   }
 }
-
-
-
 

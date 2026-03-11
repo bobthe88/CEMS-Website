@@ -87,10 +87,10 @@ create policy "Users can view their own profile"
   to authenticated
   using ((select auth.uid()) = user_id);
 
-create policy "Anyone can view roster"
+create policy "Authenticated users can view roster"
   on public.roster_members
   for select
-  to public
+  to authenticated
   using (true);
 
 create policy "Staff can insert roster rows"
@@ -161,3 +161,4 @@ where not exists (
 -- update public.user_profiles
 -- set role = 'staff'
 -- where email = 'staff.member@westpoint.edu';
+

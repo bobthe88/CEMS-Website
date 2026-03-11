@@ -1,10 +1,10 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>CEMS | Member and Staff Portal</title>
-  <meta name="description" content="Member and staff login portal for the CEMS protected roster.">
+  <meta name="description" content="Member and staff login portal for the protected CEMS site.">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600;700&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -40,8 +40,8 @@
         <div class="container auth-grid">
           <article class="auth-card">
             <span class="page-accent member-accent">Member Login</span>
-            <h2>View the protected roster</h2>
-            <p>Use this sign-in if you just need member-level access to search and view the roster.</p>
+            <h2>Open the protected site</h2>
+            <p>Use this sign-in if you need member-level access to browse the protected CEMS site.</p>
             <form data-login-form="member" class="auth-form">
               <div class="field">
                 <label for="member-email">Email</label>
@@ -58,7 +58,7 @@
           <article class="auth-card">
             <span class="page-accent staff-accent">Staff Login</span>
             <h2>Manage the roster on-site</h2>
-            <p>Use this sign-in if your account has been marked as <code>staff</code> in Supabase and you need roster editing tools.</p>
+            <p>Use this sign-in if your account has been marked as <code>staff</code> in Supabase and you need roster editing tools after entering the protected site.</p>
             <form data-login-form="staff" class="auth-form">
               <div class="field">
                 <label for="staff-email">Email</label>
@@ -88,8 +88,8 @@
         <div class="container split-grid">
           <article class="note-card">
             <span class="page-accent">Provisioning</span>
-            <h3>Create accounts in Supabase</h3>
-            <p>Create your member and staff accounts in the Supabase Auth dashboard. New users default to <code>member</code> until you promote specific people to <code>staff</code>.</p>
+            <h3>Create member accounts in Supabase</h3>
+            <p>Create your member and staff accounts in the Supabase Auth dashboard. New users default to <code>member</code>, which is now enough to access the site until you promote specific people to <code>staff</code>.</p>
           </article>
           <article class="note-card">
             <span class="page-accent">Configuration</span>

@@ -37,6 +37,10 @@ body {
     linear-gradient(180deg, #fdfcf9 0%, var(--background) 42%, #f4f1ea 100%);
 }
 
+body[data-requires-auth="member"][data-auth-state="pending"] .page-shell {
+  display: none;
+}
+
 body::before {
   content: "";
   position: fixed;
@@ -1154,3 +1158,4 @@ p {
   padding-top: 1.2rem;
   padding-bottom: 2rem;
 }
+

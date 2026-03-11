@@ -25,6 +25,7 @@ const state = {
 const authMessage = document.getElementById("roster-auth-message");
 const loginShell = document.getElementById("roster-staff-login-shell");
 const sessionShell = document.getElementById("roster-staff-session-shell");
+const sessionBadge = document.getElementById("roster-session-badge");
 const sessionTitle = document.getElementById("roster-session-title");
 const sessionCopy = document.getElementById("roster-session-copy");
 const loginForm = document.getElementById("roster-login-form");
@@ -72,21 +73,32 @@ function normalizeMember(member) {
   };
 }
 
+function escapeHtml(value) {
+  return String(value || "")
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/\"/g, "&quot;")
+    .replace(/'/g, "&#39;");
+}
+
 function createContactMarkup(value) {
   if (!value) {
     return "";
   }
 
+  const safeValue = escapeHtml(value);
+
   if (value.includes("@")) {
-    return `<a class="table-link" href="mailto:${value}">${value}</a>`;
+    return `<a class="table-link" href="mailto:${encodeURIComponent(value)}">${safeValue}</a>`;
   }
 
   const digits = value.replace(/[^0-9]/g, "");
   if (digits.length >= 10) {
-    return `<a class="table-link" href="tel:${digits}">${value}</a>`;
+    return `<a class="table-link" href="tel:${digits}">${safeValue}</a>`;
   }
 
-  return value;
+  return safeValue;
 }
 
 function slugify(value) {
@@ -104,10 +116,10 @@ function getCurrentAccessLabel() {
   }
 
   if (state.context.role === "member") {
-    return "Signed In";
+    return "Member";
   }
 
-  return "Public";
+  return "Locked";
 }
 
 function setElementVisible(element, isVisible) {
@@ -121,12 +133,17 @@ function setElementVisible(element, isVisible) {
 }
 
 function renderStaffAuth() {
+  const hasUser = Boolean(state.context.user);
   const isStaff = state.context.role === "staff";
 
-  setElementVisible(loginShell, !isStaff);
-  setElementVisible(sessionShell, isStaff);
+  setElementVisible(loginShell, !hasUser);
+  setElementVisible(sessionShell, hasUser);
 
-  if (!isStaff || !sessionTitle || !sessionCopy) {
+  if (!hasUser || !sessionTitle || !sessionCopy) {
+    if (sessionBadge) {
+      sessionBadge.textContent = "";
+    }
+
     if (sessionTitle) {
       sessionTitle.textContent = "";
     }
@@ -139,8 +156,25 @@ function renderStaffAuth() {
   }
 
   const email = state.context.user?.email || "This account";
-  sessionTitle.textContent = "Editing enabled.";
-  sessionCopy.textContent = `${email} is signed in as staff. You can add, edit, and remove roster members above.`;
+
+  if (isStaff) {
+    if (sessionBadge) {
+      sessionBadge.textContent = "Staff Session";
+      sessionBadge.className = "page-accent staff-accent";
+    }
+
+    sessionTitle.textContent = "Editing enabled.";
+    sessionCopy.textContent = `${email} is signed in as staff. You can add, edit, and remove roster members above.`;
+    return;
+  }
+
+  if (sessionBadge) {
+    sessionBadge.textContent = "Member Session";
+    sessionBadge.className = "page-accent member-accent";
+  }
+
+  sessionTitle.textContent = "Viewing enabled.";
+  sessionCopy.textContent = `${email} is signed in as a member. The roster is available in view-only mode until a staff account signs in.`;
 }
 
 function setPageUi(isStaff) {
@@ -219,8 +253,8 @@ function renderRoster() {
         ? `
           <td>
             <div class="action-cell">
-              <button class="button button-secondary button-small" type="button" data-edit-id="${member.id}">Edit</button>
-              <button class="button button-secondary button-small danger-button" type="button" data-delete-id="${member.id}">Delete</button>
+              <button class="button button-secondary button-small" type="button" data-edit-id="${escapeHtml(member.id)}">Edit</button>
+              <button class="button button-secondary button-small danger-button" type="button" data-delete-id="${escapeHtml(member.id)}">Delete</button>
             </div>
           </td>
         `
@@ -228,12 +262,12 @@ function renderRoster() {
 
       return `
         <tr>
-          <td>${member.name}</td>
-          <td><span class="category-badge ${slugify(member.certification)}">${member.certification}</span></td>
+          <td>${escapeHtml(member.name)}</td>
+          <td><span class="category-badge ${slugify(member.certification)}">${escapeHtml(member.certification)}</span></td>
           <td>${createContactMarkup(member.contact)}</td>
-          <td>${member.company}</td>
-          <td>${member.class_year}</td>
-          <td>${member.leadership}</td>
+          <td>${escapeHtml(member.company)}</td>
+          <td>${escapeHtml(member.class_year)}</td>
+          <td>${escapeHtml(member.leadership)}</td>
           ${actionCell}
         </tr>
       `;
@@ -313,8 +347,8 @@ async function loadRoster(options = {}) {
       setMessage("");
     }
   } catch (error) {
-    const guestFallback = "Unable to load the public roster. Re-run supabase/setup.sql so anonymous roster viewing is enabled.";
-    const memberFallback = "Unable to load the roster. Double-check your Supabase tables and policies.";
+    const guestFallback = "Unable to load the protected roster. Sign in again or check your Supabase authentication setup.";
+    const memberFallback = "Unable to load the roster. Double-check your Supabase tables and member access policies.";
 
     setMessage(error.message || (state.context.user ? memberFallback : guestFallback), "error");
     state.members = [];
@@ -475,7 +509,7 @@ async function handleLogout() {
   loginForm.reset();
   resetForm();
   setPageUi(false);
-  window.location.replace("roster.html");
+  window.location.replace("portal.html");
 }
 
 async function initializePage() {
@@ -521,3 +555,4 @@ onAuthStateChange(async (context) => {
 });
 
 initializePage();
+

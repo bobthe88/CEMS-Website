@@ -54,7 +54,7 @@ function createContactMarkup(value, className) {
   return `<span${cssClass}>${value}</span>`;
 }
 
-document.addEventListener("DOMContentLoaded", () => {
+function initializeSite() {
   initializeNavigation();
   initializeFooter();
 
@@ -75,7 +75,13 @@ document.addEventListener("DOMContentLoaded", () => {
   initializeGallery(data);
   initializeLeadership(data);
   initializeDocuments(data);
-});
+}
+
+if (document.readyState === "loading") {
+  document.addEventListener("DOMContentLoaded", initializeSite, { once: true });
+} else {
+  initializeSite();
+}
 
 function initializeNavigation() {
   const body = document.body;
@@ -83,6 +89,13 @@ function initializeNavigation() {
   const nav = document.querySelector(".site-nav");
   const toggle = document.querySelector(".nav-toggle");
 
+  if (nav && !nav.querySelector("[data-page='portal']")) {
+    const portalLink = document.createElement("a");
+    portalLink.href = "portal.html";
+    portalLink.dataset.page = "portal";
+    portalLink.textContent = "Account";
+    nav.appendChild(portalLink);
+  }
 
   const navLinks = document.querySelectorAll(".site-nav a");
   const activePage = body.dataset.page;
@@ -471,3 +484,4 @@ function initializeDocuments(data) {
     )
     .join("");
 }
+

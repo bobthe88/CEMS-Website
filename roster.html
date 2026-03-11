@@ -4,13 +4,13 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>CEMS | Roster</title>
-  <meta name="description" content="CEMS roster with public viewing and staff-only editing powered by Supabase.">
+  <meta name="description" content="Protected CEMS roster with member viewing and staff-only editing powered by Supabase.">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600;700&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="assets/css/styles.css">
 </head>
-<body data-page="roster" data-roster-mode="supabase">
+<body data-page="roster" data-roster-mode="supabase" data-requires-auth="member" data-auth-state="pending" aria-busy="true">
   <div class="page-shell">
     <header class="site-header">
       <div class="top-stripe"></div>
@@ -57,7 +57,7 @@
             <span>Certification Types</span>
           </article>
           <article class="metric-card">
-            <strong id="roster-access-level">Public</strong>
+            <strong id="roster-access-level">Member</strong>
             <span>Current Access</span>
           </article>
         </div>
@@ -69,7 +69,7 @@
             <div>
               <p class="eyebrow">Club Directory</p>
               <h2>Membership roster.</h2>
-              <p class="roster-intro-copy">Viewing is open on this page. Staff can sign in below to add, edit, or remove roster records.</p>
+              <p class="roster-intro-copy">Signed-in members can view the roster here. Staff can elevate below to add, edit, or remove roster records.</p>
             </div>
           </div>
 
@@ -157,8 +157,8 @@
         <div class="container login-stack">
           <article class="auth-card roster-login-card" id="roster-staff-login-shell">
             <span class="page-accent staff-accent">Staff Login</span>
-            <h2>Editing requires a staff account.</h2>
-            <p>Anyone can view the roster above. Sign in only if you need to manage roster records.</p>
+            <h2>Staff editing requires a staff account.</h2>
+            <p>Members can already view the roster above. Sign in again only if you need staff tools for roster management.</p>
             <form class="auth-form" id="roster-login-form">
               <div class="field">
                 <label for="roster-email">Email</label>
@@ -173,7 +173,7 @@
           </article>
 
           <article class="auth-card roster-login-card" id="roster-staff-session-shell" hidden aria-hidden="true" style="display: none;">
-            <span class="page-accent staff-accent">Staff Session</span>
+            <span class="page-accent member-accent" id="roster-session-badge">Member Session</span>
             <h2 id="roster-session-title"></h2>
             <p id="roster-session-copy"></p>
             <div class="button-row">
@@ -187,13 +187,13 @@
     <footer class="site-footer">
       <div class="container footer-shell">
         <p><strong>CEMS</strong> | Cadet Emergency Medical Services</p>
-        <p>Roster viewing is public; staff edits are powered by Supabase. <span data-current-year></span></p>
+        <p>Roster access is member-only; staff edits are powered by Supabase. <span data-current-year></span></p>
       </div>
     </footer>
   </div>
 
-  <script src="assets/js/site.js"></script>
   <script src="assets/js/supabase-config.js"></script>
-  <script type="module" src="assets/js/roster-app.js"></script>
+  <script type="module" src="assets/js/auth-guard.js"></script>
 </body>
 </html>
+
