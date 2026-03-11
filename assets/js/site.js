@@ -1,4 +1,4 @@
-﻿function parseISODate(dateString) {
+function parseISODate(dateString) {
   const [year, month, day] = dateString.split("-").map(Number);
   return new Date(year, month - 1, day);
 }
@@ -83,15 +83,6 @@ function initializeNavigation() {
   const nav = document.querySelector(".site-nav");
   const toggle = document.querySelector(".nav-toggle");
 
-  if (nav && !nav.querySelector('[data-page="portal"]')) {
-    const portalLink = document.createElement("a");
-    portalLink.href = "portal.html";
-    portalLink.dataset.page = "portal";
-    portalLink.textContent = "Portal";
-
-    const documentsLink = nav.querySelector('[data-page="documents"]');
-    nav.insertBefore(portalLink, documentsLink || null);
-  }
 
   const navLinks = document.querySelectorAll(".site-nav a");
   const activePage = body.dataset.page;
@@ -480,6 +471,3 @@ function initializeDocuments(data) {
     )
     .join("");
 }
-
-
-

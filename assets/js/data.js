@@ -1,4 +1,4 @@
-﻿(() => {
+(() => {
   const today = new Date();
 
   // Keeps the sample calendar populated with upcoming events until you replace it with real dates.
@@ -12,7 +12,7 @@
     return `${year}-${month}-${day}`;
   }
 
-  // Replace the public-site sample records below with your actual club data. The protected roster now lives in Supabase and is managed through the portal and roster pages.
+  // Replace the public-site sample records below with your actual club data. The roster page now pulls roster data from Supabase, while the rest of the site still uses the sample content below.
   window.CEMS_DATA = {
     club: {
       shortName: "CEMS",
@@ -278,4 +278,3 @@
     ],
   };
 })();
-

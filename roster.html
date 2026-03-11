@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>CEMS | Roster</title>
-  <meta name="description" content="Protected member and staff roster for CEMS with Supabase-backed access control and staff editing tools.">
+  <meta name="description" content="CEMS roster with public viewing and staff-only editing powered by Supabase.">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600;700&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -42,28 +42,7 @@
         </div>
       </section>
 
-      <section class="roster-login-section" id="roster-login-shell">
-        <div class="container login-stack">
-          <article class="auth-card roster-login-card">
-            <span class="page-accent member-accent">Roster Login</span>
-            <h1>Sign in to access the roster.</h1>
-            <p>Staff editing permissions are applied automatically based on the account you use.</p>
-            <form class="auth-form" id="roster-login-form">
-              <div class="field">
-                <label for="roster-email">Email</label>
-                <input id="roster-email" name="email" type="email" autocomplete="email" required>
-              </div>
-              <div class="field">
-                <label for="roster-password">Password</label>
-                <input id="roster-password" name="password" type="password" autocomplete="current-password" required>
-              </div>
-              <button class="button button-primary" id="roster-login-submit" type="submit">Sign in</button>
-            </form>
-          </article>
-        </div>
-      </section>
-
-      <section class="roster-metrics-section" id="roster-metrics-shell" hidden>
+      <section class="roster-metrics-section" id="roster-metrics-shell">
         <div class="container metrics-grid">
           <article class="metric-card">
             <strong id="roster-total">0</strong>
@@ -78,18 +57,19 @@
             <span>Certification Types</span>
           </article>
           <article class="metric-card">
-            <strong id="roster-access-level">Member</strong>
+            <strong id="roster-access-level">Public</strong>
             <span>Current Access</span>
           </article>
         </div>
       </section>
 
-      <section class="roster-protected-section" id="roster-protected-shell" hidden>
+      <section class="roster-protected-section" id="roster-protected-shell">
         <div class="container roster-shell">
           <div class="section-heading compact">
             <div>
-              <p class="eyebrow">Protected Directory</p>
+              <p class="eyebrow">Club Directory</p>
               <h2>Membership roster.</h2>
+              <p class="roster-intro-copy">Viewing is open on this page. Staff can sign in below to add, edit, or remove roster records.</p>
             </div>
           </div>
 
@@ -171,11 +151,35 @@
             </form>
           </div>
         </div>
+      </section>
 
-        <div class="container roster-footer-actions">
-          <div class="button-row">
-            <button class="button button-secondary" type="button" data-roster-logout>Log out</button>
-          </div>
+      <section class="roster-staff-section">
+        <div class="container login-stack">
+          <article class="auth-card roster-login-card" id="roster-staff-login-shell">
+            <span class="page-accent staff-accent">Staff Login</span>
+            <h2>Editing requires a staff account.</h2>
+            <p>Anyone can view the roster above. Sign in only if you need to manage roster records.</p>
+            <form class="auth-form" id="roster-login-form">
+              <div class="field">
+                <label for="roster-email">Email</label>
+                <input id="roster-email" name="email" type="email" autocomplete="email" required>
+              </div>
+              <div class="field">
+                <label for="roster-password">Password</label>
+                <input id="roster-password" name="password" type="password" autocomplete="current-password" required>
+              </div>
+              <button class="button button-primary" id="roster-login-submit" type="submit">Sign in as staff</button>
+            </form>
+          </article>
+
+          <article class="auth-card roster-login-card" id="roster-staff-session-shell" hidden>
+            <span class="page-accent staff-accent">Staff Session</span>
+            <h2 id="roster-session-title">Signed in.</h2>
+            <p id="roster-session-copy"></p>
+            <div class="button-row">
+              <button class="button button-secondary" type="button" data-roster-logout>Log out</button>
+            </div>
+          </article>
         </div>
       </section>
     </main>
@@ -183,7 +187,7 @@
     <footer class="site-footer">
       <div class="container footer-shell">
         <p><strong>CEMS</strong> | Cadet Emergency Medical Services</p>
-        <p>Protected roster powered by Supabase. <span data-current-year></span></p>
+        <p>Roster viewing is public; staff edits are powered by Supabase. <span data-current-year></span></p>
       </div>
     </footer>
   </div>

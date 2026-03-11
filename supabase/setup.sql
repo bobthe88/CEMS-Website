@@ -1,4 +1,4 @@
-﻿-- CEMS Supabase setup
+-- CEMS Supabase setup
 -- Run this file in the Supabase SQL editor after creating your project.
 
 create extension if not exists pgcrypto;
@@ -76,6 +76,7 @@ alter table public.roster_members enable row level security;
 -- Remove old policies if you rerun the file.
 drop policy if exists "Users can view their own profile" on public.user_profiles;
 drop policy if exists "Authenticated users can view roster" on public.roster_members;
+drop policy if exists "Anyone can view roster" on public.roster_members;
 drop policy if exists "Staff can insert roster rows" on public.roster_members;
 drop policy if exists "Staff can update roster rows" on public.roster_members;
 drop policy if exists "Staff can delete roster rows" on public.roster_members;
@@ -86,10 +87,10 @@ create policy "Users can view their own profile"
   to authenticated
   using ((select auth.uid()) = user_id);
 
-create policy "Authenticated users can view roster"
+create policy "Anyone can view roster"
   on public.roster_members
   for select
-  to authenticated
+  to public
   using (true);
 
 create policy "Staff can insert roster rows"
@@ -160,4 +161,3 @@ where not exists (
 -- update public.user_profiles
 -- set role = 'staff'
 -- where email = 'staff.member@westpoint.edu';
-

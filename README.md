@@ -1,25 +1,25 @@
-﻿# CEMS Website
+# CEMS Website
 
-Static GitHub Pages site for the CEMS club, now upgraded with a Supabase-backed protected roster.
+Static GitHub Pages site for the CEMS club, now upgraded with a Supabase-backed roster that supports public viewing and staff-only editing.
 
 ## Current architecture
 
 - Public pages still use static HTML, CSS, and JavaScript
-- The protected roster uses Supabase authentication and database storage
-- Member accounts can view the protected roster
+- The roster uses Supabase database storage with public read access
+- Staff accounts sign in on the roster page to manage records
 - Staff accounts can add, edit, and delete roster records directly on the site
 
 ## Main files
 
 - `index.html` public homepage
-- `portal.html` member and staff login portal
-- `roster.html` protected roster page
+- `portal.html` optional standalone login portal
+- `roster.html` public roster page with staff editing tools
 - `assets/css/styles.css` shared styling
 - `assets/js/site.js` public page behavior and shared navigation
 - `assets/js/supabase-config.js` your Supabase project configuration
 - `assets/js/supabase-client.js` shared Supabase helpers
 - `assets/js/portal.js` login workflow
-- `assets/js/roster-app.js` protected roster workflow
+- `assets/js/roster-app.js` public roster and staff editing workflow
 - `supabase/setup.sql` tables, policies, trigger, and starter roster seed
 
 ## What changed
@@ -29,7 +29,7 @@ The roster is no longer sourced from `assets/js/data.js` on the roster page.
 Instead:
 
 - `assets/js/data.js` still supports the static public pages
-- `roster.html` now loads the roster from Supabase
+- `roster.html` now loads the roster from Supabase for all visitors
 - staff users can edit roster records from the website itself
 
 ## Supabase setup steps
@@ -54,7 +54,7 @@ where email = 'staff.member@westpoint.edu';
 
 ## Roster seed data
 
-`supabase/setup.sql` seeds the Supabase roster with the same values currently in your roster table, so the protected roster starts with the records you already had.
+`supabase/setup.sql` seeds the Supabase roster with the same values currently in your roster table, so the public roster starts with the records you already had.
 
 ## Important note about keys
 
