@@ -130,6 +130,12 @@ select {
   color: var(--gold-deep);
 }
 
+.brand-mark img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
 .brand-text {
   display: grid;
   gap: 0.1rem;
@@ -1158,4 +1164,5 @@ p {
   padding-top: 1.2rem;
   padding-bottom: 2rem;
 }
+
 

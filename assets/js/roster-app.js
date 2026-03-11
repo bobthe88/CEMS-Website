@@ -212,13 +212,21 @@ function getFilteredMembers() {
   });
 }
 
+function setMetricValue(id, value) {
+  const target = document.getElementById(id);
+
+  if (target) {
+    target.textContent = String(value);
+  }
+}
+
 function renderMetrics(filteredMembers) {
-  document.getElementById("roster-total").textContent = String(state.members.length);
-  document.getElementById("roster-visible").textContent = String(filteredMembers.length);
+  setMetricValue("roster-total", state.members.length);
+  setMetricValue("roster-visible", filteredMembers.length);
 
   const uniqueCertifications = [...new Set(state.members.map((member) => member.certification))].filter(Boolean);
-  document.getElementById("roster-certifications").textContent = String(uniqueCertifications.length);
-  document.getElementById("roster-access-level").textContent = getCurrentAccessLabel();
+  setMetricValue("roster-certifications", uniqueCertifications.length);
+  setMetricValue("roster-access-level", getCurrentAccessLabel());
 }
 
 function renderCertificationOptions() {
@@ -555,4 +563,5 @@ onAuthStateChange(async (context) => {
 });
 
 initializePage();
+
 
