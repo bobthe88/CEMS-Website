@@ -5,6 +5,7 @@
   getSessionContext,
   isSupabaseConfigured,
   onAuthStateChange,
+  restorePendingSession,
   signOutCurrentUser,
   updateRosterMember,
   waitForSessionContext,
@@ -393,6 +394,11 @@ async function initializePage() {
   try {
     const pendingPortalRedirect = window.sessionStorage.getItem("cems-auth-return") === "1";
     const expectedRole = window.sessionStorage.getItem("cems-expected-role") || "member";
+
+    if (pendingPortalRedirect) {
+      await restorePendingSession();
+    }
+
     state.context = pendingPortalRedirect
       ? await waitForSessionContext({ timeoutMs: 3000, intervalMs: 175 })
       : await getSessionContext();
@@ -449,6 +455,7 @@ resetForm();
 renderCertificationOptions();
 renderRoster();
 initializePage();
+
 
 
 

@@ -5,6 +5,7 @@
   onAuthStateChange,
   signInWithPassword,
   signOutCurrentUser,
+  stashPendingSession,
   waitForSessionContext,
 } from "./supabase-client.js";
 
@@ -161,6 +162,10 @@ async function handleLoginSubmit(event) {
       throw new Error("Supabase did not return a usable session. Check whether email confirmation is required for this account in the Supabase Auth settings.");
     }
 
+    if (data?.session) {
+      stashPendingSession(data.session);
+    }
+
     setMessage("Authentication successful. Redirecting to the roster...", "success");
     window.sessionStorage.setItem("cems-auth-return", "1");
     window.sessionStorage.setItem("cems-expected-role", expectedRole);
@@ -194,6 +199,8 @@ onAuthStateChange(() => {
 
 renderConfigHints();
 refreshSession();
+
+
 
 
 

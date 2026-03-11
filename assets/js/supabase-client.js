@@ -21,7 +21,29 @@ export function getSupabaseConfig() {
   return { ...config };
 }
 
+export function stashPendingSession(session) {
+  if (!session || !window.sessionStorage) {
+    return;
+  }
+
+  const tokenPair = {
+    access_token: session.access_token,
+    refresh_token: session.refresh_token,
+  };
+
+  window.sessionStorage.setItem(pendingSessionStorageKey, JSON.stringify(tokenPair));
+}
+
+export function clearPendingSession() {
+  if (!window.sessionStorage) {
+    return;
+  }
+
+  window.sessionStorage.removeItem(pendingSessionStorageKey);
+}
+
 let supabaseClient = null;
+const pendingSessionStorageKey = "cems-pending-session";
 
 export function getSupabaseClient() {
   if (!isSupabaseConfigured()) {
@@ -53,6 +75,8 @@ export async function signInWithPassword(email, password) {
 }
 
 export async function signOutCurrentUser() {
+  clearPendingSession();
+
   const supabase = getSupabaseClient();
 
   if (!supabase) {
@@ -124,6 +148,49 @@ export async function waitForSessionContext(options = {}) {
   }
 
   return context;
+}
+
+export async function restorePendingSession() {
+  if (!window.sessionStorage) {
+    return null;
+  }
+
+  const rawValue = window.sessionStorage.getItem(pendingSessionStorageKey);
+
+  if (!rawValue) {
+    return null;
+  }
+
+  const supabase = getSupabaseClient();
+
+  if (!supabase) {
+    return null;
+  }
+
+  try {
+    const tokenPair = JSON.parse(rawValue);
+
+    if (!tokenPair?.access_token || !tokenPair?.refresh_token) {
+      clearPendingSession();
+      return null;
+    }
+
+    const { data, error } = await supabase.auth.setSession({
+      access_token: tokenPair.access_token,
+      refresh_token: tokenPair.refresh_token,
+    });
+
+    clearPendingSession();
+
+    if (error) {
+      throw error;
+    }
+
+    return data?.session || null;
+  } catch (_error) {
+    clearPendingSession();
+    return null;
+  }
 }
 
 export function onAuthStateChange(handler) {
@@ -212,4 +279,6 @@ export async function deleteRosterMember(id) {
     throw error;
   }
 }
+
+
 
