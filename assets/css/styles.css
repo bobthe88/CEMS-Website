@@ -243,6 +243,11 @@ p {
   flex-wrap: wrap;
 }
 
+.hero-actions .button {
+  padding: 0.72rem 1.05rem;
+  font-size: 0.92rem;
+}
+
 .button,
 .text-link {
   display: inline-flex;
