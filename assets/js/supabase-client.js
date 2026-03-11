@@ -1,0 +1,200 @@
+﻿import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm";
+
+const rawConfig = window.CEMS_SUPABASE_CONFIG || {};
+const config = {
+  url: rawConfig.url || "",
+  publishableKey: rawConfig.publishableKey || rawConfig.anonKey || "",
+  rosterTable: rawConfig.rosterTable || "roster_members",
+  profileTable: rawConfig.profileTable || "user_profiles",
+  portalRedirect: rawConfig.portalRedirect || "roster.html",
+};
+
+function looksConfigured(value) {
+  return Boolean(value) && !/YOUR_|REPLACE_|CHANGE_ME/i.test(value);
+}
+
+export function isSupabaseConfigured() {
+  return looksConfigured(config.url) && looksConfigured(config.publishableKey);
+}
+
+export function getSupabaseConfig() {
+  return { ...config };
+}
+
+let supabaseClient = null;
+
+export function getSupabaseClient() {
+  if (!isSupabaseConfigured()) {
+    return null;
+  }
+
+  if (!supabaseClient) {
+    supabaseClient = createClient(config.url, config.publishableKey, {
+      auth: {
+        autoRefreshToken: true,
+        persistSession: true,
+        detectSessionInUrl: true,
+        storageKey: "cems-supabase-auth",
+      },
+    });
+  }
+
+  return supabaseClient;
+}
+
+export async function signInWithPassword(email, password) {
+  const supabase = getSupabaseClient();
+
+  if (!supabase) {
+    throw new Error("Supabase is not configured yet.");
+  }
+
+  return supabase.auth.signInWithPassword({ email, password });
+}
+
+export async function signOutCurrentUser() {
+  const supabase = getSupabaseClient();
+
+  if (!supabase) {
+    return { error: null };
+  }
+
+  return supabase.auth.signOut();
+}
+
+export async function getSessionContext() {
+  const supabase = getSupabaseClient();
+
+  if (!supabase) {
+    return {
+      user: null,
+      session: null,
+      profile: null,
+      role: "guest",
+    };
+  }
+
+  const {
+    data: { session },
+    error: sessionError,
+  } = await supabase.auth.getSession();
+
+  if (sessionError) {
+    throw sessionError;
+  }
+
+  const user = session?.user || null;
+
+  if (!user) {
+    return {
+      user: null,
+      session: null,
+      profile: null,
+      role: "guest",
+    };
+  }
+
+  const { data: profile, error: profileError } = await supabase
+    .from(config.profileTable)
+    .select("user_id, email, role")
+    .eq("user_id", user.id)
+    .maybeSingle();
+
+  if (profileError && profileError.code !== "PGRST116") {
+    throw profileError;
+  }
+
+  return {
+    user,
+    session,
+    profile: profile || null,
+    role: profile?.role === "staff" ? "staff" : "member",
+  };
+}
+
+export function onAuthStateChange(handler) {
+  const supabase = getSupabaseClient();
+
+  if (!supabase) {
+    return { data: { subscription: { unsubscribe() {} } } };
+  }
+
+  return supabase.auth.onAuthStateChange(async (_event, session) => {
+    const context = await getSessionContext();
+    handler({ ...context, session: session || context.session });
+  });
+}
+
+export async function fetchRosterMembers() {
+  const supabase = getSupabaseClient();
+
+  if (!supabase) {
+    throw new Error("Supabase is not configured yet.");
+  }
+
+  const { data, error } = await supabase
+    .from(config.rosterTable)
+    .select("id, name, certification, contact, company, class_year, leadership")
+    .order("name", { ascending: true });
+
+  if (error) {
+    throw error;
+  }
+
+  return data || [];
+}
+
+export async function createRosterMember(member) {
+  const supabase = getSupabaseClient();
+
+  if (!supabase) {
+    throw new Error("Supabase is not configured yet.");
+  }
+
+  const { data, error } = await supabase
+    .from(config.rosterTable)
+    .insert(member)
+    .select("id, name, certification, contact, company, class_year, leadership")
+    .single();
+
+  if (error) {
+    throw error;
+  }
+
+  return data;
+}
+
+export async function updateRosterMember(id, member) {
+  const supabase = getSupabaseClient();
+
+  if (!supabase) {
+    throw new Error("Supabase is not configured yet.");
+  }
+
+  const { data, error } = await supabase
+    .from(config.rosterTable)
+    .update(member)
+    .eq("id", id)
+    .select("id, name, certification, contact, company, class_year, leadership")
+    .single();
+
+  if (error) {
+    throw error;
+  }
+
+  return data;
+}
+
+export async function deleteRosterMember(id) {
+  const supabase = getSupabaseClient();
+
+  if (!supabase) {
+    throw new Error("Supabase is not configured yet.");
+  }
+
+  const { error } = await supabase.from(config.rosterTable).delete().eq("id", id);
+
+  if (error) {
+    throw error;
+  }
+}

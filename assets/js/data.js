@@ -12,7 +12,7 @@
     return `${year}-${month}-${day}`;
   }
 
-  // Replace the sample records below with your actual club data.
+  // Replace the public-site sample records below with your actual club data. The protected roster now lives in Supabase and is managed through the portal and roster pages.
   window.CEMS_DATA = {
     club: {
       shortName: "CEMS",
@@ -278,3 +278,4 @@
     ],
   };
 })();
+

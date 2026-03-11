@@ -1,0 +1,131 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>CEMS | Member and Staff Portal</title>
+  <meta name="description" content="Member and staff login portal for the CEMS protected roster.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600;700&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="assets/css/styles.css">
+</head>
+<body data-page="portal">
+  <div class="page-shell">
+    <header class="site-header">
+      <div class="top-stripe"></div>
+      <div class="container nav-shell">
+        <a class="brand" href="index.html">
+          <span class="brand-mark">CEMS</span>
+          <span class="brand-text">
+            <strong>Cadet EMS</strong>
+            <small>Emergency Medical Services Club</small>
+          </span>
+        </a>
+        <button class="nav-toggle" type="button" aria-expanded="false" aria-controls="site-nav">Menu</button>
+        <nav class="site-nav" id="site-nav">
+          <a href="index.html" data-page="home">Home</a>
+          <a href="roster.html" data-page="roster">Roster</a>
+          <a href="calendar.html" data-page="calendar">Calendar</a>
+          <a href="signup.html" data-page="signup">Sign Up</a>
+          <a href="gallery.html" data-page="gallery">Gallery</a>
+          <a href="leadership.html" data-page="leadership">Leadership</a>
+          <a href="documents.html" data-page="documents">Documents</a>
+        </nav>
+      </div>
+    </header>
+
+    <main>
+      <section class="page-banner">
+        <div class="container page-panel">
+          <span class="page-accent">Member and Staff Portal</span>
+          <div class="page-intro">
+            <div>
+              <p class="eyebrow">Supabase Authentication</p>
+              <h1>Choose the access path you need.</h1>
+            </div>
+            <p>
+              Both login paths use Supabase authentication. Member accounts get read-only roster access. Staff accounts use the same authentication system,
+              but their role is elevated in Supabase so they can manage the roster directly on the site.
+            </p>
+          </div>
+        </div>
+      </section>
+
+      <section>
+        <div class="container auth-summary-shell">
+          <div class="status-banner" id="auth-message" hidden></div>
+          <div class="auth-session-card" id="auth-session" hidden>
+            <div id="auth-session-copy"></div>
+            <div class="button-row" id="auth-session-actions"></div>
+          </div>
+        </div>
+      </section>
+
+      <section>
+        <div class="container auth-grid">
+          <article class="auth-card">
+            <span class="page-accent member-accent">Member Login</span>
+            <h2>View the protected roster</h2>
+            <p>Use this sign-in if you just need member-level access to search and view the roster.</p>
+            <form data-login-form="member" class="auth-form">
+              <div class="field">
+                <label for="member-email">Email</label>
+                <input id="member-email" name="email" type="email" autocomplete="email" required>
+              </div>
+              <div class="field">
+                <label for="member-password">Password</label>
+                <input id="member-password" name="password" type="password" autocomplete="current-password" required>
+              </div>
+              <button class="button button-primary" type="submit">Sign in as member</button>
+            </form>
+          </article>
+
+          <article class="auth-card">
+            <span class="page-accent staff-accent">Staff Login</span>
+            <h2>Manage the roster on-site</h2>
+            <p>Use this sign-in if your account has been marked as <code>staff</code> in Supabase and you need roster editing tools.</p>
+            <form data-login-form="staff" class="auth-form">
+              <div class="field">
+                <label for="staff-email">Email</label>
+                <input id="staff-email" name="email" type="email" autocomplete="email" required>
+              </div>
+              <div class="field">
+                <label for="staff-password">Password</label>
+                <input id="staff-password" name="password" type="password" autocomplete="current-password" required>
+              </div>
+              <button class="button button-secondary" type="submit">Sign in as staff</button>
+            </form>
+          </article>
+        </div>
+      </section>
+
+      <section>
+        <div class="container split-grid">
+          <article class="note-card">
+            <span class="page-accent">Provisioning</span>
+            <h3>Create accounts in Supabase</h3>
+            <p>Create your member and staff accounts in the Supabase Auth dashboard. New users default to <code>member</code> until you promote specific people to <code>staff</code>.</p>
+          </article>
+          <article class="note-card">
+            <span class="page-accent">Configuration</span>
+            <h3>Finish one file before testing</h3>
+            <p data-supabase-config-target>assets/js/supabase-config.js</p>
+          </article>
+        </div>
+      </section>
+    </main>
+
+    <footer class="site-footer">
+      <div class="container footer-shell">
+        <p><strong>CEMS</strong> | Cadet Emergency Medical Services</p>
+        <p>Portal access powered by Supabase. <span data-current-year></span></p>
+      </div>
+    </footer>
+  </div>
+
+  <script src="assets/js/site.js"></script>
+  <script src="assets/js/supabase-config.js"></script>
+  <script type="module" src="assets/js/portal.js"></script>
+</body>
+</html>

@@ -55,16 +55,21 @@ function createContactMarkup(value, className) {
 }
 
 document.addEventListener("DOMContentLoaded", () => {
+  initializeNavigation();
+  initializeFooter();
+
   const data = window.CEMS_DATA;
 
   if (!data) {
     return;
   }
 
-  initializeNavigation();
-  initializeFooter();
   initializeHome(data);
-  initializeRoster(data);
+
+  if (document.body.dataset.rosterMode !== "supabase") {
+    initializeRoster(data);
+  }
+
   initializeCalendar(data);
   initializeSignup(data);
   initializeGallery(data);
@@ -74,6 +79,20 @@ document.addEventListener("DOMContentLoaded", () => {
 
 function initializeNavigation() {
   const body = document.body;
+  const navShell = document.querySelector(".nav-shell");
+  const nav = document.querySelector(".site-nav");
+  const toggle = document.querySelector(".nav-toggle");
+
+  if (nav && !nav.querySelector('[data-page="portal"]')) {
+    const portalLink = document.createElement("a");
+    portalLink.href = "portal.html";
+    portalLink.dataset.page = "portal";
+    portalLink.textContent = "Portal";
+
+    const documentsLink = nav.querySelector('[data-page="documents"]');
+    nav.insertBefore(portalLink, documentsLink || null);
+  }
+
   const navLinks = document.querySelectorAll(".site-nav a");
   const activePage = body.dataset.page;
 
@@ -82,9 +101,6 @@ function initializeNavigation() {
       link.classList.add("active");
     }
   });
-
-  const toggle = document.querySelector(".nav-toggle");
-  const navShell = document.querySelector(".nav-shell");
 
   if (!toggle || !navShell) {
     return;
@@ -464,4 +480,5 @@ function initializeDocuments(data) {
     )
     .join("");
 }
+
 
