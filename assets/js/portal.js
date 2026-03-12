@@ -12,6 +12,7 @@ import {
 
 const state = {
   busy: false,
+  redirecting: false,
 };
 
 const authReturnStorageKey = "cems-auth-return";
@@ -68,6 +69,51 @@ function clearAuthRedirectState() {
   }
 
   window.sessionStorage.removeItem(authReturnStorageKey);
+}
+
+function shouldAutoContinue(context, memberRecord) {
+  if (!context.user || !window.sessionStorage) {
+    return false;
+  }
+
+  if (window.sessionStorage.getItem(authReturnStorageKey) !== "1") {
+    return false;
+  }
+
+  return context.role === "staff" || Boolean(memberRecord);
+}
+
+function redirectToRequestedPath() {
+  clearAuthRedirectState();
+  window.location.replace(getRequestedPath());
+}
+
+function getAuthCallbackErrorMessage() {
+  const params = new URLSearchParams(window.location.search);
+  const errorCode = params.get("error_code") || "";
+  const errorDescription = params.get("error_description") || "";
+
+  if (!errorCode && !errorDescription) {
+    return "";
+  }
+
+  if (/otp_expired/i.test(errorCode) || /expired|already been used|invalid/i.test(errorDescription)) {
+    return "This sign-in link has expired or was already used. Request a fresh email and open the newest link.";
+  }
+
+  return errorDescription || "The sign-in link could not be completed. Request a fresh email and try again.";
+}
+
+function getFriendlyAuthErrorMessage(error, expectedRole) {
+  const message = String(error?.message || "").trim();
+
+  if (/security purposes|rate limit|too many requests|too many/i.test(message)) {
+    return expectedRole === "member"
+      ? "Too many member sign-in emails were requested too quickly. Wait a minute, then request a fresh link."
+      : "Too many sign-in attempts were made too quickly. Wait a minute and try again.";
+  }
+
+  return message || "Unable to sign in right now.";
 }
 
 function buildMemberRedirectUrl() {
@@ -194,8 +240,26 @@ async function refreshSession() {
 
     renderSession(context, memberRecord);
 
+    if (shouldAutoContinue(context, memberRecord)) {
+      if (!state.redirecting) {
+        state.redirecting = true;
+        setMessage("Your sign-in is active. Redirecting to the member site...", "success");
+        window.setTimeout(() => {
+          redirectToRequestedPath();
+        }, 150);
+      }
+
+      return;
+    }
+
+    state.redirecting = false;
+
     if (!context.user) {
-      setMessage("Use your roster email to receive a member sign-in link, or use the staff login for editing access.", "info");
+      const callbackError = getAuthCallbackErrorMessage();
+      setMessage(
+        callbackError || "Use your roster email to receive a member sign-in link, or use the staff login for editing access.",
+        callbackError ? "warning" : "info"
+      );
     } else if (context.role === "staff") {
       setMessage("You are already signed in with staff access. You can continue to the private member site now.", "success");
     } else if (memberRecord) {
@@ -248,6 +312,10 @@ async function handleLoginSubmit(event) {
     }
 
     if (expectedRole === "member") {
+      if (window.sessionStorage) {
+        window.sessionStorage.setItem(authReturnStorageKey, "1");
+      }
+
       const { error } = await signInWithMemberMagicLink(email, buildMemberRedirectUrl());
 
       if (error) {
@@ -255,7 +323,7 @@ async function handleLoginSubmit(event) {
       }
 
       setMessage(
-        `Check ${email} for your sign-in link. Open it on this device to continue into the private member site.`,
+        `Check ${email} for your sign-in link. Open the newest link on this device to continue into the private member site.`,
         "success"
       );
       form.reset();
@@ -291,7 +359,11 @@ async function handleLoginSubmit(event) {
       window.location.href = returnTarget;
     }, 250);
   } catch (error) {
-    setMessage(error.message || "Unable to sign in right now.", "error");
+    if (expectedRole === "member") {
+      clearAuthRedirectState();
+    }
+
+    setMessage(getFriendlyAuthErrorMessage(error, expectedRole), "error");
   } finally {
     setBusy(false);
   }
