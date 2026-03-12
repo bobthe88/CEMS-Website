@@ -111,22 +111,23 @@
                   <p class="eyebrow">Event List</p>
                   <h2>This month</h2>
                 </div>
-                <p class="calendar-sidebar-copy">Use the quick action in the list or open a full event detail below.</p>
+                <p class="calendar-sidebar-copy">Use the quick action in the list or open a full event detail overlay.</p>
               </div>
               <div class="timeline-stack" id="month-events"></div>
-
-              <article class="calendar-detail-card" id="calendar-detail-panel">
-                <div class="calendar-detail-empty" id="calendar-detail-empty">
-                  <span class="page-accent member-accent">Event Detail</span>
-                  <h3>Select an event</h3>
-                  <p>Choose an event from the month view or the list to review staffing needs, see who is already assigned, and sign up.</p>
-                </div>
-                <div class="calendar-detail-content" id="calendar-detail-content" hidden></div>
-              </article>
             </aside>
           </div>
         </div>
       </section>
+
+      <div class="calendar-modal" id="calendar-detail-modal" hidden aria-hidden="true">
+        <div class="calendar-modal-backdrop" data-close-event-modal></div>
+        <div class="calendar-modal-dialog" role="dialog" aria-modal="true" aria-labelledby="calendar-detail-title">
+          <button class="calendar-modal-close" id="calendar-detail-close" type="button" aria-label="Close event detail">
+            Close
+          </button>
+          <div class="calendar-detail-content" id="calendar-detail-content"></div>
+        </div>
+      </div>
 
       <section class="calendar-admin-section" id="calendar-admin-shell" hidden>
         <div class="container">

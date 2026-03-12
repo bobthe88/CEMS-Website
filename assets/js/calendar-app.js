@@ -43,9 +43,9 @@ const authMessage = document.getElementById("calendar-auth-message");
 const title = document.getElementById("calendar-title");
 const calendarGrid = document.getElementById("calendar-grid");
 const monthEvents = document.getElementById("month-events");
-const detailPanel = document.getElementById("calendar-detail-panel");
-const detailEmpty = document.getElementById("calendar-detail-empty");
+const detailModal = document.getElementById("calendar-detail-modal");
 const detailContent = document.getElementById("calendar-detail-content");
+const detailCloseButton = document.getElementById("calendar-detail-close");
 const prevButton = document.getElementById("prev-month");
 const nextButton = document.getElementById("next-month");
 const adminShell = document.getElementById("calendar-admin-shell");
@@ -596,32 +596,26 @@ function updateSelectedEventInUrl() {
   window.history.replaceState(null, "", `${url.pathname}${url.search}${url.hash}`);
 }
 
-function ensureSelectedEvent(monthlyEvents) {
-  if (!monthlyEvents.length) {
-    state.selectedEventId = null;
-    updateSelectedEventInUrl();
+function closeSelectedEvent(options = {}) {
+  if (!state.selectedEventId && !options.force) {
     return;
   }
 
-  const selectionVisible = monthlyEvents.some((event) => event.id === state.selectedEventId);
-
-  if (selectionVisible) {
-    updateSelectedEventInUrl();
-    return;
-  }
-
-  const upcoming = monthlyEvents.find((event) => parseISODate(event.date) >= getTodayStart()) || monthlyEvents[0];
-  state.selectedEventId = upcoming?.id || null;
+  state.selectedEventId = null;
+  document.body.classList.remove("calendar-modal-open");
   updateSelectedEventInUrl();
+
+  if (!options.skipRender) {
+    renderCalendar();
+  }
 }
 
-function renderDetailPanel() {
+function renderDetailModal() {
   const selectedEvent = getEventById(state.selectedEventId);
 
   if (!selectedEvent) {
-    setElementVisible(detailEmpty, true);
-    setElementVisible(detailContent, false);
-
+    setElementVisible(detailModal, false);
+    document.body.classList.remove("calendar-modal-open");
     if (detailContent) {
       detailContent.innerHTML = "";
     }
@@ -635,14 +629,14 @@ function renderDetailPanel() {
     ? `${state.currentMember.name} is rostered as ${state.currentMember.certification}.`
     : "Your signed-in account is not linked to a roster record yet.";
 
-  setElementVisible(detailEmpty, false);
-  setElementVisible(detailContent, true);
+  setElementVisible(detailModal, true);
+  document.body.classList.add("calendar-modal-open");
 
   detailContent.innerHTML = `
     <div class="calendar-detail-head">
       <div>
         <span class="page-accent member-accent">Event Detail</span>
-        <h3>${escapeHtml(selectedEvent.title)}</h3>
+        <h3 id="calendar-detail-title">${escapeHtml(selectedEvent.title)}</h3>
       </div>
       <span class="event-status-pill ${getEventStatusTone(selectedEvent)}">${escapeHtml(getEventStatusLabel(selectedEvent))}</span>
     </div>
@@ -683,9 +677,7 @@ function renderDetailPanel() {
 function bindCalendarActions() {
   document.querySelectorAll("[data-select-event-id]").forEach((button) => {
     button.addEventListener("click", () => {
-      selectEvent(button.dataset.selectEventId, {
-        scrollDetail: button.classList.contains("calendar-entry"),
-      });
+      selectEvent(button.dataset.selectEventId);
     });
   });
 
@@ -732,7 +724,10 @@ function renderCalendar() {
   }, {});
 
   const monthlyEvents = getMonthEvents();
-  ensureSelectedEvent(monthlyEvents);
+
+  if (state.selectedEventId && !getEventById(state.selectedEventId)) {
+    closeSelectedEvent({ force: true, skipRender: true });
+  }
 
   const calendarCells = [];
 
@@ -774,11 +769,11 @@ function renderCalendar() {
   }
 
   renderMetrics(monthlyEvents);
-  renderDetailPanel();
+  renderDetailModal();
   bindCalendarActions();
 }
 
-function selectEvent(eventId, options = {}) {
+function selectEvent(eventId) {
   const eventRecord = getEventById(eventId);
 
   if (!eventRecord) {
@@ -798,10 +793,6 @@ function selectEvent(eventId, options = {}) {
 
   updateSelectedEventInUrl();
   renderCalendar();
-
-  if (options.scrollDetail && detailPanel) {
-    detailPanel.scrollIntoView({ behavior: "smooth", block: "start" });
-  }
 }
 
 function getSignupRequirementsFromForm() {
@@ -847,7 +838,6 @@ function startEditing(eventId) {
   }, {});
 
   state.editingId = eventId;
-  state.selectedEventId = eventId;
   formTitle.textContent = "Edit calendar event";
   formSubmit.textContent = "Update event";
   cancelEdit.hidden = false;
@@ -865,7 +855,7 @@ function startEditing(eventId) {
     adminForm.elements[SLOT_FIELD_MAP[certification]].value = String(requirementMap[certification] || 0);
   });
 
-  updateSelectedEventInUrl();
+  closeSelectedEvent({ force: true, skipRender: true });
   renderCalendar();
   adminForm.scrollIntoView({ behavior: "smooth", block: "start" });
 }
@@ -910,7 +900,10 @@ async function loadCalendar(options = {}) {
 
       if (initialEvent) {
         setDisplayedMonthFromDate(initialEvent.date);
-        state.selectedEventId = initialEvent.id;
+      }
+
+      if (requestedEvent) {
+        state.selectedEventId = requestedEvent.id;
       }
 
       state.monthInitialized = true;
@@ -1226,6 +1219,20 @@ loginForm.addEventListener("submit", handleLogin);
 adminForm.addEventListener("submit", handleSave);
 cancelEdit.addEventListener("click", resetForm);
 logoutButtons.forEach((button) => button.addEventListener("click", handleLogout));
+
+if (detailCloseButton) {
+  detailCloseButton.addEventListener("click", () => closeSelectedEvent());
+}
+
+document.querySelectorAll("[data-close-event-modal]").forEach((element) => {
+  element.addEventListener("click", () => closeSelectedEvent());
+});
+
+document.addEventListener("keydown", (event) => {
+  if (event.key === "Escape" && state.selectedEventId) {
+    closeSelectedEvent();
+  }
+});
 
 onAuthStateChange(async (context) => {
   if (!context.user) {
