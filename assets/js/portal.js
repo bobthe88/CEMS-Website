@@ -1,7 +1,9 @@
 import {
+  fetchCurrentRosterMember,
   getSupabaseConfig,
   isSupabaseConfigured,
   onAuthStateChange,
+  signInWithMemberMagicLink,
   signInWithPassword,
   signOutCurrentUser,
   stashPendingSession,
@@ -68,6 +70,17 @@ function clearAuthRedirectState() {
   window.sessionStorage.removeItem(authReturnStorageKey);
 }
 
+function buildMemberRedirectUrl() {
+  const redirectUrl = new URL("portal.html", window.location.href);
+  const returnTarget = getRequestedPath();
+
+  if (returnTarget) {
+    redirectUrl.searchParams.set("next", returnTarget);
+  }
+
+  return redirectUrl.toString();
+}
+
 function setBusy(isBusy) {
   state.busy = isBusy;
 
@@ -75,7 +88,9 @@ function setBusy(isBusy) {
     const submitButton = form.querySelector("button[type='submit']");
     if (submitButton) {
       submitButton.disabled = isBusy;
-      submitButton.textContent = isBusy ? "Signing In..." : submitButton.dataset.defaultLabel;
+      submitButton.textContent = isBusy
+        ? submitButton.dataset.busyLabel || "Working..."
+        : submitButton.dataset.defaultLabel;
     }
   });
 }
@@ -104,7 +119,7 @@ function renderConfigHints() {
   });
 }
 
-function renderSession(context) {
+function renderSession(context, memberRecord = null) {
   if (!sessionShell || !sessionCopy || !sessionActions) {
     return;
   }
@@ -118,15 +133,24 @@ function renderSession(context) {
 
   const returnTarget = getRequestedPath();
   const actionLabel = returnTarget === defaultProtectedPath ? "Open member site" : "Continue";
+  const hasMemberAccess = context.role === "staff" || Boolean(memberRecord);
+  const sessionSummary = context.role === "staff"
+    ? "You are signed in with <strong>staff</strong> access. Staff can browse the member site and use editing tools on the roster and calendar pages."
+    : memberRecord
+      ? `You are signed in as <strong>${memberRecord.name}</strong> with <strong>${memberRecord.certification}</strong> coverage. You can browse the member site and claim calendar slots that match your certification.`
+      : "This email is authenticated, but it is not linked to a roster record yet. Ask staff to add this address to the roster before using the private member site.";
+  const continueAction = hasMemberAccess
+    ? `<a class="button button-primary" href="${returnTarget}">${actionLabel}</a>`
+    : "";
 
   sessionShell.hidden = false;
   sessionCopy.innerHTML = `
     <span class="page-accent">Signed In</span>
     <h3>${context.user.email}</h3>
-    <p>You are signed in with <strong>${context.role}</strong> access. Members can browse the private member site. Staff can also create, edit, and delete roster and calendar records.</p>
+    <p>${sessionSummary}</p>
   `;
   sessionActions.innerHTML = `
-    <a class="button button-primary" href="${returnTarget}">${actionLabel}</a>
+    ${continueAction}
     <button class="button button-secondary" type="button" data-logout-inline>Sign out</button>
   `;
 
@@ -162,12 +186,22 @@ async function refreshSession() {
 
   try {
     const context = await waitForSessionContext();
-    renderSession(context);
+    let memberRecord = null;
+
+    if (context.user && context.role !== "staff") {
+      memberRecord = await fetchCurrentRosterMember();
+    }
+
+    renderSession(context, memberRecord);
 
     if (!context.user) {
-      setMessage("Use the member login to open the private member site or the staff login for editing access.", "info");
+      setMessage("Use your roster email to receive a member sign-in link, or use the staff login for editing access.", "info");
+    } else if (context.role === "staff") {
+      setMessage("You are already signed in with staff access. You can continue to the private member site now.", "success");
+    } else if (memberRecord) {
+      setMessage("Your member sign-in is active. You can continue to the private member site now.", "success");
     } else {
-      setMessage("You are already signed in. You can continue to the private member site now.", "success");
+      setMessage("This email is signed in, but it is not linked to a roster member yet. Ask staff to add it to the roster before continuing.", "warning");
     }
   } catch (error) {
     setMessage(error.message || "Unable to read the current session.", "error");
@@ -184,10 +218,9 @@ async function handleLoginSubmit(event) {
   const form = event.currentTarget;
   const expectedRole = form.dataset.loginForm;
   const email = form.querySelector("input[name='email']").value.trim();
-  const password = form.querySelector("input[name='password']").value;
 
-  if (!email || !password) {
-    setMessage("Enter both your email and password.", "warning");
+  if (!email) {
+    setMessage("Enter your email address first.", "warning");
     return;
   }
 
@@ -200,9 +233,42 @@ async function handleLoginSubmit(event) {
   }
 
   setBusy(true);
-  setMessage(`Signing in to the ${expectedRole} portal...`, "info");
+  setMessage(
+    expectedRole === "member"
+      ? "Sending your member sign-in link..."
+      : `Signing in to the ${expectedRole} portal...`,
+    "info"
+  );
 
   try {
+    const returnTarget = getRequestedPath();
+
+    if (window.sessionStorage) {
+      window.sessionStorage.setItem(postLoginPathStorageKey, returnTarget);
+    }
+
+    if (expectedRole === "member") {
+      const { error } = await signInWithMemberMagicLink(email, buildMemberRedirectUrl());
+
+      if (error) {
+        throw error;
+      }
+
+      setMessage(
+        `Check ${email} for your sign-in link. Open it on this device to continue into the private member site.`,
+        "success"
+      );
+      form.reset();
+      return;
+    }
+
+    const password = form.querySelector("input[name='password']").value;
+
+    if (!password) {
+      setMessage("Enter both your email and password.", "warning");
+      return;
+    }
+
     const { data, error } = await signInWithPassword(email, password);
 
     if (error) {
@@ -216,8 +282,6 @@ async function handleLoginSubmit(event) {
     if (data?.session) {
       stashPendingSession(data.session);
     }
-
-    const returnTarget = getRequestedPath();
 
     setMessage("Authentication successful. Redirecting to the private member site...", "success");
     window.sessionStorage.setItem(authReturnStorageKey, "1");
@@ -237,6 +301,8 @@ signInForms.forEach((form) => {
   const submitButton = form.querySelector("button[type='submit']");
   if (submitButton) {
     submitButton.dataset.defaultLabel = submitButton.textContent;
+    submitButton.dataset.busyLabel =
+      form.dataset.loginForm === "member" ? "Sending Link..." : "Signing In...";
   }
 
   form.addEventListener("submit", handleLoginSubmit);

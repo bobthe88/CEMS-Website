@@ -1,4 +1,5 @@
 import {
+  fetchCurrentRosterMember,
   isSupabaseConfigured,
   onAuthStateChange,
   restorePendingSession,
@@ -128,13 +129,31 @@ async function initializeGuard() {
       return;
     }
 
+    if (context.role !== "staff") {
+      const memberRecord = await fetchCurrentRosterMember();
+
+      if (!memberRecord) {
+        redirectToPortal();
+        return;
+      }
+    }
+
     markReady(context);
     await loadProtectedPageScripts();
 
-    onAuthStateChange((updatedContext) => {
+    onAuthStateChange(async (updatedContext) => {
       if (!updatedContext.user) {
         redirectToPortal();
         return;
+      }
+
+      if (updatedContext.role !== "staff") {
+        const memberRecord = await fetchCurrentRosterMember();
+
+        if (!memberRecord) {
+          redirectToPortal();
+          return;
+        }
       }
 
       markReady(updatedContext);

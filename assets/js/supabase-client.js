@@ -209,6 +209,27 @@ export async function signInWithPassword(email, password) {
   return supabase.auth.signInWithPassword({ email, password });
 }
 
+export async function signInWithMemberMagicLink(email, emailRedirectTo) {
+  const supabase = getSupabaseClient();
+
+  if (!supabase) {
+    throw new Error("Supabase is not configured yet.");
+  }
+
+  const options = {
+    shouldCreateUser: true,
+  };
+
+  if (emailRedirectTo) {
+    options.emailRedirectTo = emailRedirectTo;
+  }
+
+  return supabase.auth.signInWithOtp({
+    email,
+    options,
+  });
+}
+
 export async function signOutCurrentUser() {
   clearPendingSession();
 

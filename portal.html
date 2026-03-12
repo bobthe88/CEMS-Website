@@ -45,17 +45,14 @@
         <div class="container auth-grid">
           <article class="auth-card">
             <h2>Member Login</h2>
-            <p>Use this login to enter the private member site.</p>
+            <p>Use your roster email and we will send a passwordless sign-in link to open the private member site.</p>
             <form data-login-form="member" class="auth-form">
               <div class="field">
                 <label for="member-email">Email</label>
                 <input id="member-email" name="email" type="email" autocomplete="email" required>
               </div>
-              <div class="field">
-                <label for="member-password">Password</label>
-                <input id="member-password" name="password" type="password" autocomplete="current-password" required>
-              </div>
-              <button class="button button-primary" type="submit">Sign in as member</button>
+              <p class="muted-text">No password is required. The email must match the address on your CEMS roster record.</p>
+              <button class="button button-primary" type="submit">Email me a sign-in link</button>
             </form>
           </article>
 
