@@ -82,7 +82,7 @@
 
           <div class="filter-shell">
             <div class="field">
-              <label for="roster-search">Search name, company, contact, class year, or role</label>
+              <label for="roster-search">Search name, company, contact, phone number, class year, or role</label>
               <input id="roster-search" type="search" placeholder="Search the roster">
             </div>
             <div class="field">
@@ -100,6 +100,7 @@
                   <th>Name</th>
                   <th>Certification</th>
                   <th>Contact</th>
+                  <th>Phone Number</th>
                   <th>Company</th>
                   <th>Class Year</th>
                   <th>Leadership</th>
@@ -138,6 +139,10 @@
               <div class="field">
                 <label for="staff-contact">Contact</label>
                 <input id="staff-contact" name="contact" type="text" required>
+              </div>
+              <div class="field">
+                <label for="staff-phone-number">Phone Number</label>
+                <input id="staff-phone-number" name="phone_number" type="tel" autocomplete="tel" placeholder="(555) 555-5555">
               </div>
               <div class="field">
                 <label for="staff-company">Company</label>

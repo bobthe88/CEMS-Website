@@ -67,6 +67,7 @@ function normalizeMember(member) {
     name: member.name || "",
     certification: member.certification || "",
     contact: member.contact || "",
+    phone_number: member.phone_number || "",
     company: member.company || "",
     class_year: member.class_year || "",
     leadership: member.leadership || "",
@@ -197,6 +198,7 @@ function getFilteredMembers() {
     const matchesSearch = [
       member.name,
       member.contact,
+      member.phone_number,
       member.company,
       member.leadership,
       member.class_year,
@@ -273,6 +275,7 @@ function renderRoster() {
           <td>${escapeHtml(member.name)}</td>
           <td><span class="category-badge ${slugify(member.certification)}">${escapeHtml(member.certification)}</span></td>
           <td>${createContactMarkup(member.contact)}</td>
+          <td>${createContactMarkup(member.phone_number)}</td>
           <td>${escapeHtml(member.company)}</td>
           <td>${escapeHtml(member.class_year)}</td>
           <td>${escapeHtml(member.leadership)}</td>
@@ -318,6 +321,7 @@ function startEditing(memberId) {
   adminForm.elements.name.value = member.name;
   adminForm.elements.certification.value = member.certification;
   adminForm.elements.contact.value = member.contact;
+  adminForm.elements.phone_number.value = member.phone_number;
   adminForm.elements.company.value = member.company;
   adminForm.elements.class_year.value = member.class_year;
   adminForm.elements.leadership.value = member.leadership;
@@ -404,13 +408,14 @@ async function handleSave(event) {
     name: adminForm.elements.name.value.trim(),
     certification: adminForm.elements.certification.value,
     contact: adminForm.elements.contact.value.trim(),
+    phone_number: adminForm.elements.phone_number.value.trim(),
     company: adminForm.elements.company.value.trim(),
     class_year: adminForm.elements.class_year.value.trim(),
     leadership: adminForm.elements.leadership.value.trim() || "Member",
   };
 
   if (!member.name || !member.contact || !member.company || !member.class_year || !member.certification) {
-    setMessage("Complete every roster field before saving.", "warning");
+    setMessage("Complete the required roster fields before saving.", "warning");
     return;
   }
 

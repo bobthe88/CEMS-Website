@@ -1,4 +1,4 @@
-﻿-- CEMS Supabase setup
+-- CEMS Supabase setup
 -- Run this file in the Supabase SQL editor after creating your project.
 
 create extension if not exists pgcrypto;
@@ -16,12 +16,16 @@ create table if not exists public.roster_members (
   name text not null,
   certification text not null check (certification in ('AEMT', 'EMT', 'EMR', '68W')),
   contact text not null,
+  phone_number text not null default '',
   company text not null,
   class_year text not null,
   leadership text not null default 'Member',
   created_at timestamptz not null default timezone('utc', now()),
   updated_at timestamptz not null default timezone('utc', now())
 );
+
+alter table public.roster_members
+  add column if not exists phone_number text not null default '';
 
 create table if not exists public.calendar_events (
   id uuid primary key default gen_random_uuid(),
@@ -218,19 +222,19 @@ create policy "Staff can delete calendar events"
     )
   );
 
-insert into public.roster_members (name, certification, contact, company, class_year, leadership)
+insert into public.roster_members (name, certification, contact, phone_number, company, class_year, leadership)
 select *
 from (
   values
-    ('Cadet Bennett Marshall', 'EMT', 'benentt.marshall@westpoint.edu', 'C-4', '2027', 'Cadet in Charge'),
-    ('Cadet Brooke Ellis', 'EMT', 'brooke.ellis@institution.edu', 'B Company', '2028', 'Vice President'),
-    ('Cadet Cameron Hayes', '68W', 'cameron.hayes@institution.edu', 'C Company', '2027', 'Operations Officer'),
-    ('Cadet Dana Mitchell', 'EMR', 'dana.mitchell@institution.edu', 'D Company', '2029', 'Membership Coordinator'),
-    ('Cadet Evan Brooks', 'EMT', 'evan.brooks@institution.edu', 'E Company', '2028', 'Training Officer'),
-    ('Cadet Fiona Grant', 'AEMT', 'fiona.grant@institution.edu', 'F Company', '2027', 'Equipment Officer'),
-    ('Cadet Gavin Moore', '68W', 'gavin.moore@institution.edu', 'G Company', '2029', 'Member'),
-    ('Cadet Harper Reed', 'EMT', 'harper.reed@institution.edu', 'H Company', '2028', 'Public Affairs Officer')
-) as seed(name, certification, contact, company, class_year, leadership)
+    ('Cadet Bennett Marshall', 'EMT', 'benentt.marshall@westpoint.edu', '(845) 555-0101', 'C-4', '2027', 'Cadet in Charge'),
+    ('Cadet Brooke Ellis', 'EMT', 'brooke.ellis@institution.edu', '(845) 555-0102', 'B Company', '2028', 'Vice President'),
+    ('Cadet Cameron Hayes', '68W', 'cameron.hayes@institution.edu', '(845) 555-0103', 'C Company', '2027', 'Operations Officer'),
+    ('Cadet Dana Mitchell', 'EMR', 'dana.mitchell@institution.edu', '(845) 555-0104', 'D Company', '2029', 'Membership Coordinator'),
+    ('Cadet Evan Brooks', 'EMT', 'evan.brooks@institution.edu', '(845) 555-0105', 'E Company', '2028', 'Training Officer'),
+    ('Cadet Fiona Grant', 'AEMT', 'fiona.grant@institution.edu', '(845) 555-0106', 'F Company', '2027', 'Equipment Officer'),
+    ('Cadet Gavin Moore', '68W', 'gavin.moore@institution.edu', '(845) 555-0107', 'G Company', '2029', 'Member'),
+    ('Cadet Harper Reed', 'EMT', 'harper.reed@institution.edu', '(845) 555-0108', 'H Company', '2028', 'Public Affairs Officer')
+) as seed(name, certification, contact, phone_number, company, class_year, leadership)
 where not exists (
   select 1 from public.roster_members
 );
