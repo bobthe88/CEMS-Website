@@ -85,14 +85,51 @@ if (document.readyState === "loading") {
   initializeSite();
 }
 
+const NAVIGATION_CONFIG = {
+  public: {
+    brandHref: "index.html",
+    links: [
+      { href: "index.html", page: "home", label: "Home" },
+      { href: "about.html", page: "about", label: "About Us" },
+      { href: "request-service.html", page: "request-services", label: "Request Services" },
+      { href: "leadership.html", page: "leadership", label: "Leadership" },
+      { href: "portal.html", page: "portal", label: "Portal" },
+    ],
+  },
+  private: {
+    brandHref: "member-home.html",
+    links: [
+      { href: "member-home.html", page: "member-home", label: "Member Home" },
+      { href: "roster.html", page: "roster", label: "Roster" },
+      { href: "calendar.html", page: "calendar", label: "Calendar" },
+      { href: "signup.html", page: "signup", label: "Sign Up" },
+      { href: "gallery.html", page: "gallery", label: "Gallery" },
+      { href: "documents.html", page: "documents", label: "Documents" },
+    ],
+  },
+};
+
 function initializeNavigation() {
   const body = document.body;
   const navShell = document.querySelector(".nav-shell");
   const toggle = document.querySelector(".nav-toggle");
+  const brand = document.querySelector(".brand");
+  const nav = document.querySelector(".site-nav");
+  const activePage = body.dataset.page;
+  const navScope = body.dataset.navScope === "private" ? "private" : "public";
+  const config = NAVIGATION_CONFIG[navScope];
+
+  if (brand && config?.brandHref) {
+    brand.setAttribute("href", config.brandHref);
+  }
+
+  if (nav && config?.links?.length) {
+    nav.innerHTML = config.links
+      .map((link) => `<a href="${link.href}" data-page="${link.page}">${link.label}</a>`)
+      .join("");
+  }
 
   const navLinks = document.querySelectorAll(".site-nav a");
-  const activePage = body.dataset.page;
-
   navLinks.forEach((link) => {
     if (link.dataset.page === activePage) {
       link.classList.add("active");
