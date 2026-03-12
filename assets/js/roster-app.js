@@ -275,7 +275,7 @@ function renderRoster() {
           <td>${escapeHtml(member.name)}</td>
           <td><span class="category-badge ${slugify(member.certification)}">${escapeHtml(member.certification)}</span></td>
           <td>${createContactMarkup(member.contact)}</td>
-          <td>${createContactMarkup(member.phone_number)}</td>
+          <td class="nowrap-column">${createContactMarkup(member.phone_number)}</td>
           <td>${escapeHtml(member.company)}</td>
           <td>${escapeHtml(member.class_year)}</td>
           <td>${escapeHtml(member.leadership)}</td>

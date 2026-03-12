@@ -247,7 +247,7 @@ export async function fetchRosterMembers() {
 
   const { data, error } = await supabase
     .from(config.rosterTable)
-    .select("id, name, certification, contact, phone_number, company, class_year, leadership")
+    .select("*")
     .order("name", { ascending: true });
 
   if (error) {
@@ -267,7 +267,7 @@ export async function createRosterMember(member) {
   const { data, error } = await supabase
     .from(config.rosterTable)
     .insert(member)
-    .select("id, name, certification, contact, phone_number, company, class_year, leadership")
+    .select("*")
     .single();
 
   if (error) {
@@ -288,7 +288,7 @@ export async function updateRosterMember(id, member) {
     .from(config.rosterTable)
     .update(member)
     .eq("id", id)
-    .select("id, name, certification, contact, phone_number, company, class_year, leadership")
+    .select("*")
     .single();
 
   if (error) {

@@ -648,6 +648,10 @@ p {
   background: rgba(16, 20, 23, 0.03);
 }
 
+.nowrap-column {
+  white-space: nowrap;
+}
+
 .table-link {
   color: var(--gold-deep);
   font-weight: 700;
