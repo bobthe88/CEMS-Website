@@ -73,7 +73,6 @@ function initializeSite() {
   if (document.body.dataset.calendarMode !== "supabase") {
     initializeCalendar(data);
   }
-  initializeSignup(data);
   initializeGallery(data);
   initializeLeadership(data);
   initializeDocuments(data);
@@ -102,7 +101,6 @@ const NAVIGATION_CONFIG = {
       { href: "member-home.html", page: "member-home", label: "Member Home" },
       { href: "roster.html", page: "roster", label: "Roster" },
       { href: "calendar.html", page: "calendar", label: "Calendar" },
-      { href: "signup.html", page: "signup", label: "Sign Up" },
       { href: "gallery.html", page: "gallery", label: "Gallery" },
       { href: "documents.html", page: "documents", label: "Documents" },
     ],
@@ -155,11 +153,46 @@ function initializeFooter() {
   });
 }
 
+function getEventCalendarLink(event) {
+  if (!event?.id) {
+    return "calendar.html";
+  }
+
+  return `calendar.html?event=${encodeURIComponent(event.id)}`;
+}
+
+function getEventSignupSummary(event) {
+  const requirements = Array.isArray(event.signupRequirements) ? event.signupRequirements : [];
+  const totalSlots = requirements.reduce(
+    (total, requirement) => total + Number(requirement.slotsNeeded || 0),
+    0
+  );
+  const filledSlots = requirements.reduce(
+    (total, requirement) => total + (requirement.signups || []).length,
+    0
+  );
+
+  if (!totalSlots) {
+    return "No staffing slots assigned.";
+  }
+
+  if (!event.signupOpen) {
+    return `${filledSlots} of ${totalSlots} slots filled. Signups closed.`;
+  }
+
+  const openSlots = Math.max(totalSlots - filledSlots, 0);
+
+  if (!openSlots) {
+    return `All ${totalSlots} staffing slots are filled.`;
+  }
+
+  return `${openSlots} of ${totalSlots} staffing slots remain open.`;
+}
+
 function createEventCard(event) {
   const categoryClass = slugify(event.category);
-  const signupHtml = event.signupOpen
-    ? `<a class="text-link" href="${event.signupUrl || window.CEMS_DATA.club.signupUrl}" target="_blank" rel="noreferrer">Signup link</a>`
-    : `<span class="muted-text">No signup required</span>`;
+  const calendarLink = getEventCalendarLink(event);
+  const actionCopy = event.signupOpen ? "Sign up on calendar" : "View on calendar";
 
   return `
     <article class="info-card event-card">
@@ -176,7 +209,8 @@ function createEventCard(event) {
         <span>${formatTimeRange(event.startTime, event.endTime)}</span>
         <span>${event.location}</span>
       </div>
-      ${signupHtml}
+      <p class="muted-text">${getEventSignupSummary(event)}</p>
+      <a class="text-link" href="${calendarLink}">${actionCopy}</a>
     </article>
   `;
 }
@@ -384,22 +418,6 @@ function initializeCalendar(data) {
   });
 
   renderCalendar();
-}
-
-function initializeSignup(data) {
-  const signupLink = document.getElementById("signup-link");
-  const signupOpportunities = document.getElementById("signup-opportunities");
-
-  if (signupLink) {
-    signupLink.href = data.club.signupUrl;
-  }
-
-  if (signupOpportunities) {
-    const signupEvents = data.events.filter((event) => event.signupOpen);
-    signupOpportunities.innerHTML = signupEvents.length
-      ? signupEvents.map(createEventCard).join("")
-      : '<p class="empty-state">No open signup opportunities are listed right now.</p>';
-  }
 }
 
 function initializeGallery(data) {

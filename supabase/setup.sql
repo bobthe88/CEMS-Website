@@ -42,6 +42,37 @@ create table if not exists public.calendar_events (
   updated_at timestamptz not null default timezone('utc', now())
 );
 
+create table if not exists public.event_signup_requirements (
+  id uuid primary key default gen_random_uuid(),
+  event_id uuid not null references public.calendar_events(id) on delete cascade,
+  certification text not null check (certification in ('AEMT', 'EMT', 'EMR', '68W')),
+  slots_needed integer not null check (slots_needed > 0),
+  created_at timestamptz not null default timezone('utc', now()),
+  updated_at timestamptz not null default timezone('utc', now()),
+  unique (event_id, certification)
+);
+
+create table if not exists public.event_signups (
+  id uuid primary key default gen_random_uuid(),
+  event_id uuid not null references public.calendar_events(id) on delete cascade,
+  requirement_id uuid not null references public.event_signup_requirements(id) on delete cascade,
+  member_id uuid not null references public.roster_members(id) on delete cascade,
+  created_at timestamptz not null default timezone('utc', now()),
+  unique (event_id, member_id)
+);
+
+create index if not exists event_signup_requirements_event_id_idx
+  on public.event_signup_requirements (event_id);
+
+create index if not exists event_signups_event_id_idx
+  on public.event_signups (event_id);
+
+create index if not exists event_signups_requirement_id_idx
+  on public.event_signups (requirement_id);
+
+create index if not exists event_signups_member_id_idx
+  on public.event_signups (member_id);
+
 create or replace function public.set_updated_at()
 returns trigger
 language plpgsql
@@ -65,6 +96,250 @@ begin
   set email = excluded.email;
 
   return new;
+end;
+$$;
+
+create or replace function public.set_event_signup_requirements(
+  p_event_id uuid,
+  p_requirements jsonb default '[]'::jsonb
+)
+returns void
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  requirement_item jsonb;
+  certification_value text;
+  slots_value integer;
+  existing_requirement record;
+  existing_signup_count integer;
+  next_slots integer;
+  seen_certifications text[] := array[]::text[];
+begin
+  if not exists (
+    select 1
+    from public.user_profiles profiles
+    where profiles.user_id = (select auth.uid())
+      and profiles.role = 'staff'
+  ) then
+    raise exception 'Only staff can change signup requirements.'
+      using errcode = '42501';
+  end if;
+
+  if not exists (
+    select 1
+    from public.calendar_events events
+    where events.id = p_event_id
+  ) then
+    raise exception 'Event not found.';
+  end if;
+
+  if p_requirements is null then
+    p_requirements := '[]'::jsonb;
+  end if;
+
+  if jsonb_typeof(p_requirements) <> 'array' then
+    raise exception 'Signup requirements must be provided as an array.';
+  end if;
+
+  for requirement_item in
+    select value
+    from jsonb_array_elements(p_requirements)
+  loop
+    certification_value := upper(trim(coalesce(requirement_item ->> 'certification', '')));
+    slots_value := coalesce((requirement_item ->> 'slots_needed')::integer, 0);
+
+    if certification_value not in ('AEMT', 'EMT', 'EMR', '68W') then
+      raise exception 'Unsupported certification: %.', certification_value;
+    end if;
+
+    if slots_value <= 0 then
+      raise exception 'Slot counts must be greater than zero for %.', certification_value;
+    end if;
+
+    if certification_value = any(seen_certifications) then
+      raise exception 'Each certification can only be listed once per event.';
+    end if;
+
+    seen_certifications := array_append(seen_certifications, certification_value);
+  end loop;
+
+  for existing_requirement in
+    select req.id, req.certification
+    from public.event_signup_requirements req
+    where req.event_id = p_event_id
+  loop
+    select count(*)
+    into existing_signup_count
+    from public.event_signups signups
+    where signups.requirement_id = existing_requirement.id;
+
+    if existing_requirement.certification = any(seen_certifications) then
+      select coalesce((value ->> 'slots_needed')::integer, 0)
+      into next_slots
+      from jsonb_array_elements(p_requirements) as value
+      where upper(trim(coalesce(value ->> 'certification', ''))) = existing_requirement.certification
+      limit 1;
+
+      if existing_signup_count > next_slots then
+        raise exception '% already has % confirmed signup(s). Increase that slot count or remove signups first.',
+          existing_requirement.certification,
+          existing_signup_count;
+      end if;
+    elsif existing_signup_count > 0 then
+      raise exception 'Cannot remove the % requirement while % member(s) are still signed up.',
+        existing_requirement.certification,
+        existing_signup_count;
+    end if;
+  end loop;
+
+  for requirement_item in
+    select value
+    from jsonb_array_elements(p_requirements)
+  loop
+    certification_value := upper(trim(coalesce(requirement_item ->> 'certification', '')));
+    slots_value := (requirement_item ->> 'slots_needed')::integer;
+
+    insert into public.event_signup_requirements (event_id, certification, slots_needed)
+    values (p_event_id, certification_value, slots_value)
+    on conflict (event_id, certification) do update
+      set slots_needed = excluded.slots_needed,
+          updated_at = timezone('utc', now());
+  end loop;
+
+  delete from public.event_signup_requirements req
+  where req.event_id = p_event_id
+    and not (req.certification = any(seen_certifications))
+    and not exists (
+      select 1
+      from public.event_signups signups
+      where signups.requirement_id = req.id
+    );
+end;
+$$;
+
+create or replace function public.sign_up_for_event(p_event_id uuid)
+returns public.event_signups
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  auth_email text := lower(coalesce(auth.jwt() ->> 'email', ''));
+  member_record public.roster_members%rowtype;
+  event_record public.calendar_events%rowtype;
+  requirement_record public.event_signup_requirements%rowtype;
+  created_signup public.event_signups%rowtype;
+  signup_count integer;
+begin
+  if auth_email = '' then
+    raise exception 'You must be signed in to claim a slot.'
+      using errcode = '42501';
+  end if;
+
+  select *
+  into member_record
+  from public.roster_members members
+  where lower(members.contact) = auth_email
+  order by members.created_at asc
+  limit 1;
+
+  if not found then
+    raise exception 'Your account is not linked to a roster record yet. Ask staff to add your email to the roster before signing up.';
+  end if;
+
+  select *
+  into event_record
+  from public.calendar_events events
+  where events.id = p_event_id;
+
+  if not found then
+    raise exception 'Event not found.';
+  end if;
+
+  if not event_record.signup_open then
+    raise exception 'Signups are closed for this event.';
+  end if;
+
+  if exists (
+    select 1
+    from public.event_signups signups
+    where signups.event_id = p_event_id
+      and signups.member_id = member_record.id
+  ) then
+    raise exception 'You are already signed up for this event.';
+  end if;
+
+  select *
+  into requirement_record
+  from public.event_signup_requirements requirements
+  where requirements.event_id = p_event_id
+    and requirements.certification = member_record.certification
+  order by requirements.created_at asc
+  limit 1
+  for update;
+
+  if not found then
+    raise exception 'This event is not requesting % coverage right now.', member_record.certification;
+  end if;
+
+  select count(*)
+  into signup_count
+  from public.event_signups signups
+  where signups.requirement_id = requirement_record.id;
+
+  if signup_count >= requirement_record.slots_needed then
+    raise exception 'All % slots are already full.', member_record.certification;
+  end if;
+
+  insert into public.event_signups (event_id, requirement_id, member_id)
+  values (p_event_id, requirement_record.id, member_record.id)
+  returning *
+  into created_signup;
+
+  return created_signup;
+end;
+$$;
+
+create or replace function public.withdraw_from_event(p_event_id uuid)
+returns void
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  auth_email text := lower(coalesce(auth.jwt() ->> 'email', ''));
+  member_record public.roster_members%rowtype;
+begin
+  if auth_email = '' then
+    raise exception 'You must be signed in to withdraw from an event.'
+      using errcode = '42501';
+  end if;
+
+  select *
+  into member_record
+  from public.roster_members members
+  where lower(members.contact) = auth_email
+  order by members.created_at asc
+  limit 1;
+
+  if not found then
+    raise exception 'Your account is not linked to a roster record yet.';
+  end if;
+
+  if not exists (
+    select 1
+    from public.event_signups signups
+    where signups.event_id = p_event_id
+      and signups.member_id = member_record.id
+  ) then
+    raise exception 'You are not signed up for this event.';
+  end if;
+
+  delete from public.event_signups signups
+  where signups.event_id = p_event_id
+    and signups.member_id = member_record.id;
 end;
 $$;
 
@@ -94,9 +369,16 @@ create trigger set_calendar_events_updated_at
   before update on public.calendar_events
   for each row execute procedure public.set_updated_at();
 
+drop trigger if exists set_event_signup_requirements_updated_at on public.event_signup_requirements;
+create trigger set_event_signup_requirements_updated_at
+  before update on public.event_signup_requirements
+  for each row execute procedure public.set_updated_at();
+
 alter table public.user_profiles enable row level security;
 alter table public.roster_members enable row level security;
 alter table public.calendar_events enable row level security;
+alter table public.event_signup_requirements enable row level security;
+alter table public.event_signups enable row level security;
 
 -- Remove old policies if you rerun the file.
 drop policy if exists "Users can view their own profile" on public.user_profiles;
@@ -109,6 +391,11 @@ drop policy if exists "Authenticated users can view events" on public.calendar_e
 drop policy if exists "Staff can insert calendar events" on public.calendar_events;
 drop policy if exists "Staff can update calendar events" on public.calendar_events;
 drop policy if exists "Staff can delete calendar events" on public.calendar_events;
+drop policy if exists "Authenticated users can view signup requirements" on public.event_signup_requirements;
+drop policy if exists "Staff can insert signup requirements" on public.event_signup_requirements;
+drop policy if exists "Staff can update signup requirements" on public.event_signup_requirements;
+drop policy if exists "Staff can delete signup requirements" on public.event_signup_requirements;
+drop policy if exists "Authenticated users can view signups" on public.event_signups;
 
 create policy "Users can view their own profile"
   on public.user_profiles
@@ -222,6 +509,74 @@ create policy "Staff can delete calendar events"
     )
   );
 
+create policy "Authenticated users can view signup requirements"
+  on public.event_signup_requirements
+  for select
+  to authenticated
+  using (true);
+
+create policy "Staff can insert signup requirements"
+  on public.event_signup_requirements
+  for insert
+  to authenticated
+  with check (
+    exists (
+      select 1
+      from public.user_profiles profiles
+      where profiles.user_id = (select auth.uid())
+        and profiles.role = 'staff'
+    )
+  );
+
+create policy "Staff can update signup requirements"
+  on public.event_signup_requirements
+  for update
+  to authenticated
+  using (
+    exists (
+      select 1
+      from public.user_profiles profiles
+      where profiles.user_id = (select auth.uid())
+        and profiles.role = 'staff'
+    )
+  )
+  with check (
+    exists (
+      select 1
+      from public.user_profiles profiles
+      where profiles.user_id = (select auth.uid())
+        and profiles.role = 'staff'
+    )
+  );
+
+create policy "Staff can delete signup requirements"
+  on public.event_signup_requirements
+  for delete
+  to authenticated
+  using (
+    exists (
+      select 1
+      from public.user_profiles profiles
+      where profiles.user_id = (select auth.uid())
+        and profiles.role = 'staff'
+    )
+  );
+
+create policy "Authenticated users can view signups"
+  on public.event_signups
+  for select
+  to authenticated
+  using (true);
+
+revoke all on function public.set_event_signup_requirements(uuid, jsonb) from public;
+grant execute on function public.set_event_signup_requirements(uuid, jsonb) to authenticated;
+
+revoke all on function public.sign_up_for_event(uuid) from public;
+grant execute on function public.sign_up_for_event(uuid) to authenticated;
+
+revoke all on function public.withdraw_from_event(uuid) from public;
+grant execute on function public.withdraw_from_event(uuid) to authenticated;
+
 insert into public.roster_members (name, certification, contact, phone_number, company, class_year, leadership)
 select *
 from (
@@ -262,15 +617,69 @@ select
   seed.signup_url
 from (
   values
-    ('Home Event Medical Coverage', 4, '1300', '1700', 'Primary Stadium / Venue', 'Staffing', 'Coverage detail for a major campus event requiring a visible and disciplined CEMS presence.', true, 'https://www.signupgenius.com/'),
-    ('Trauma Skills Refresher', 7, '1830', '2030', 'Training Room 101', 'Training', 'Hands-on airway, hemorrhage control, patient packaging, and handoff practice.', true, 'https://www.signupgenius.com/'),
-    ('Weekend Duty Rotation', 11, '0800', '1200', 'Campus Quad', 'Weekend', 'Weekend support window for campus activity coverage and standby response.', true, 'https://www.signupgenius.com/'),
+    ('Home Event Medical Coverage', 4, '1300', '1700', 'Primary Stadium / Venue', 'Staffing', 'Coverage detail for a major campus event requiring a visible and disciplined CEMS presence.', true, ''),
+    ('Trauma Skills Refresher', 7, '1830', '2030', 'Training Room 101', 'Training', 'Hands-on airway, hemorrhage control, patient packaging, and handoff practice.', true, ''),
+    ('Weekend Duty Rotation', 11, '0800', '1200', 'Campus Quad', 'Weekend', 'Weekend support window for campus activity coverage and standby response.', true, ''),
     ('Mass Casualty Tabletop', 16, '1900', '2100', 'Leadership Lab', 'Training', 'Scenario-based command and triage planning focused on communication and delegation.', false, ''),
-    ('Spring Open House Coverage', 20, '0900', '1500', 'Main Parade Field', 'Staffing', 'High-visibility public-facing standby shift for visitors and campus activities.', true, 'https://www.signupgenius.com/'),
+    ('Spring Open House Coverage', 20, '0900', '1500', 'Main Parade Field', 'Staffing', 'High-visibility public-facing standby shift for visitors and campus activities.', true, ''),
     ('Senior-to-Junior Turnover Brief', 27, '1800', '1930', 'Club Headquarters', 'Weekend', 'Leadership continuity meeting covering operations, equipment, and expectations for the next cycle.', false, '')
 ) as seed(title, day_offset, start_time, end_time, location, category, description, signup_open, signup_url)
 where not exists (
   select 1 from public.calendar_events
+);
+
+insert into public.event_signup_requirements (event_id, certification, slots_needed)
+select
+  events.id,
+  seed.certification,
+  seed.slots_needed
+from (
+  values
+    ('Home Event Medical Coverage', 'AEMT', 1),
+    ('Home Event Medical Coverage', 'EMT', 2),
+    ('Home Event Medical Coverage', '68W', 1),
+    ('Trauma Skills Refresher', 'EMT', 3),
+    ('Trauma Skills Refresher', 'EMR', 2),
+    ('Weekend Duty Rotation', 'EMT', 1),
+    ('Weekend Duty Rotation', '68W', 1),
+    ('Spring Open House Coverage', 'AEMT', 1),
+    ('Spring Open House Coverage', 'EMT', 2),
+    ('Spring Open House Coverage', 'EMR', 1)
+) as seed(title, certification, slots_needed)
+join public.calendar_events events
+  on events.title = seed.title
+where not exists (
+  select 1
+  from public.event_signup_requirements requirements
+  where requirements.event_id = events.id
+    and requirements.certification = seed.certification
+);
+
+insert into public.event_signups (event_id, requirement_id, member_id)
+select
+  events.id,
+  requirements.id,
+  members.id
+from (
+  values
+    ('Home Event Medical Coverage', 'Cadet Bennett Marshall'),
+    ('Home Event Medical Coverage', 'Cadet Fiona Grant'),
+    ('Trauma Skills Refresher', 'Cadet Brooke Ellis'),
+    ('Weekend Duty Rotation', 'Cadet Cameron Hayes'),
+    ('Spring Open House Coverage', 'Cadet Dana Mitchell')
+) as seed(event_title, member_name)
+join public.calendar_events events
+  on events.title = seed.event_title
+join public.roster_members members
+  on members.name = seed.member_name
+join public.event_signup_requirements requirements
+  on requirements.event_id = events.id
+ and requirements.certification = members.certification
+where not exists (
+  select 1
+  from public.event_signups signups
+  where signups.event_id = events.id
+    and signups.member_id = members.id
 );
 
 -- Promote a specific signed-up user to staff after they exist in auth.users:

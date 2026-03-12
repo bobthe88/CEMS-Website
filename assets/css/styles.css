@@ -1221,3 +1221,328 @@ p {
 .calendar-event-actions {
   margin-top: 0.35rem;
 }
+
+.button:disabled {
+  opacity: 0.62;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
+}
+
+.field-help {
+  margin: 0;
+  color: var(--ink-muted);
+  font-size: 0.92rem;
+}
+
+.calendar-board,
+.calendar-sidebar {
+  min-width: 0;
+}
+
+.calendar-sidebar {
+  display: grid;
+  gap: 1rem;
+  align-content: start;
+}
+
+.calendar-sidebar-copy {
+  max-width: 34ch;
+}
+
+.calendar-grid {
+  grid-auto-rows: minmax(152px, auto);
+}
+
+.calendar-cell {
+  min-height: 152px;
+  overflow: hidden;
+}
+
+.calendar-cell.has-events {
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.92), rgba(185, 146, 67, 0.08)),
+    rgba(255, 255, 255, 0.82);
+}
+
+.calendar-cell-events {
+  min-width: 0;
+  overflow: hidden;
+}
+
+.calendar-entry {
+  width: 100%;
+  min-width: 0;
+  border: 1px solid rgba(16, 20, 23, 0.08);
+  border-radius: 15px;
+  padding: 0.65rem 0.72rem;
+  background: rgba(255, 255, 255, 0.9);
+  text-align: left;
+  display: grid;
+  gap: 0.35rem;
+  cursor: pointer;
+  transition: transform 180ms ease, box-shadow 180ms ease, border-color 180ms ease;
+}
+
+.calendar-entry:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 14px 24px rgba(16, 20, 23, 0.08);
+}
+
+.calendar-entry.selected {
+  border-color: rgba(185, 146, 67, 0.45);
+  box-shadow: 0 16px 28px rgba(185, 146, 67, 0.14);
+}
+
+.calendar-entry-title {
+  min-width: 0;
+  max-width: 100%;
+  display: -webkit-box;
+  overflow: hidden;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  font-size: 0.84rem;
+  font-weight: 800;
+  line-height: 1.25;
+  overflow-wrap: anywhere;
+}
+
+.calendar-entry-meta {
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  flex-wrap: wrap;
+  color: var(--ink-muted);
+  font-size: 0.68rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+.calendar-entry-category {
+  font-weight: 800;
+}
+
+.calendar-more {
+  width: 100%;
+  justify-content: flex-start;
+  padding: 0.34rem 0.6rem;
+  color: var(--ink-muted);
+}
+
+.event-list-card {
+  border-color: rgba(16, 20, 23, 0.08);
+}
+
+.event-list-card.selected {
+  border-color: rgba(185, 146, 67, 0.36);
+  box-shadow: 0 18px 36px rgba(185, 146, 67, 0.12);
+}
+
+.event-list-head {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+}
+
+.event-status-pill {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 999px;
+  padding: 0.38rem 0.72rem;
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.event-status-pill.open {
+  background: rgba(27, 95, 72, 0.12);
+  color: #1b5f48;
+}
+
+.event-status-pill.full {
+  background: rgba(16, 20, 23, 0.1);
+  color: var(--ink);
+}
+
+.event-status-pill.closed {
+  background: rgba(185, 146, 67, 0.16);
+  color: var(--gold-deep);
+}
+
+.event-status-pill.neutral {
+  background: rgba(16, 20, 23, 0.06);
+  color: var(--ink-muted);
+}
+
+.signup-requirement-grid {
+  display: grid;
+  gap: 1rem;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
+.signup-requirement-stack {
+  display: grid;
+  gap: 0.75rem;
+}
+
+.signup-requirement-stack.compact {
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+}
+
+.signup-requirement-card {
+  display: grid;
+  gap: 0.75rem;
+  padding: 0.9rem;
+  border-radius: 18px;
+  border: 1px solid rgba(16, 20, 23, 0.08);
+  background: rgba(255, 255, 255, 0.9);
+}
+
+.signup-requirement-card.compact {
+  padding: 0.8rem;
+}
+
+.signup-requirement-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+}
+
+.signup-requirement-empty {
+  padding: 0.4rem 0;
+}
+
+.signup-member-list {
+  display: flex;
+  gap: 0.45rem;
+  flex-wrap: wrap;
+}
+
+.signup-member-pill {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.36rem 0.62rem;
+  border-radius: 999px;
+  background: rgba(16, 20, 23, 0.08);
+  color: var(--ink);
+  font-size: 0.82rem;
+  font-weight: 700;
+}
+
+.signup-assignment-copy {
+  font-size: 0.94rem;
+}
+
+.calendar-detail-card {
+  display: grid;
+  gap: 1rem;
+  padding: 1.1rem;
+  border-radius: var(--radius-sm);
+  background: rgba(255, 255, 255, 0.88);
+  border: 1px solid rgba(16, 20, 23, 0.08);
+  box-shadow: 0 18px 34px rgba(16, 20, 23, 0.06);
+  position: sticky;
+  top: 6rem;
+}
+
+.calendar-detail-empty,
+.calendar-detail-content {
+  display: grid;
+  gap: 1rem;
+}
+
+.calendar-detail-head {
+  display: flex;
+  align-items: start;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.calendar-detail-description {
+  font-size: 1rem;
+}
+
+.calendar-detail-meta {
+  font-size: 0.95rem;
+}
+
+.calendar-member-panel {
+  display: grid;
+  gap: 0.35rem;
+  padding: 1rem;
+  border-radius: 18px;
+  background: rgba(16, 20, 23, 0.05);
+  border: 1px solid rgba(16, 20, 23, 0.08);
+}
+
+.calendar-member-panel.warning {
+  background: rgba(185, 146, 67, 0.12);
+}
+
+.calendar-detail-section {
+  display: grid;
+  gap: 0.8rem;
+}
+
+.calendar-detail-section-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.calendar-detail-section h4 {
+  margin: 0;
+  font-size: 0.88rem;
+  font-family: "Manrope", sans-serif;
+  font-weight: 800;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--ink-muted);
+}
+
+@media (max-width: 1080px) {
+  .calendar-detail-card {
+    position: static;
+  }
+}
+
+@media (max-width: 900px) {
+  .signup-requirement-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 840px) {
+  .calendar-detail-head,
+  .calendar-detail-section-head,
+  .signup-requirement-head {
+    flex-direction: column;
+    align-items: start;
+  }
+}
+
+@media (max-width: 620px) {
+  .calendar-grid {
+    grid-auto-rows: minmax(128px, auto);
+  }
+
+  .calendar-cell {
+    min-height: 128px;
+  }
+
+  .calendar-entry {
+    padding: 0.55rem 0.6rem;
+  }
+
+  .signup-requirement-grid {
+    grid-template-columns: 1fr;
+  }
+}

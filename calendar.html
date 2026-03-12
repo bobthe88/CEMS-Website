@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>CEMS | Calendar</title>
-  <meta name="description" content="Operational calendar for CEMS with member viewing and staff-only editing powered by Supabase.">
+  <meta name="description" content="Operational calendar for CEMS with direct event signup, staffing visibility, and staff-only editing powered by Supabase.">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600;700&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -34,7 +34,6 @@
           <a href="member-home.html" data-page="member-home">Member Home</a>
           <a href="roster.html" data-page="roster">Roster</a>
           <a href="calendar.html" data-page="calendar">Calendar</a>
-          <a href="signup.html" data-page="signup">Sign Up</a>
           <a href="gallery.html" data-page="gallery">Gallery</a>
           <a href="documents.html" data-page="documents">Documents</a>
         </nav>
@@ -76,11 +75,11 @@
               <p class="eyebrow">Monthly View</p>
               <h2>Mission schedule at a glance.</h2>
             </div>
-            <p>Staffing requirements, training nights, and weekend events all pull from the same live Supabase schedule.</p>
+            <p>Members can claim requested certification slots directly from the shared calendar, and every event shows who is already on the detail.</p>
           </div>
 
           <div class="calendar-layout">
-            <div>
+            <div class="calendar-board">
               <div class="calendar-controls">
                 <button id="prev-month" type="button">Previous</button>
                 <h3 id="calendar-title">Month Year</h3>
@@ -106,14 +105,24 @@
               <div class="calendar-grid" id="calendar-grid"></div>
             </div>
 
-            <aside>
+            <aside class="calendar-sidebar">
               <div class="section-heading compact">
                 <div>
                   <p class="eyebrow">Event List</p>
                   <h2>This month</h2>
                 </div>
+                <p class="calendar-sidebar-copy">Use the quick action in the list or open a full event detail below.</p>
               </div>
               <div class="timeline-stack" id="month-events"></div>
+
+              <article class="calendar-detail-card" id="calendar-detail-panel">
+                <div class="calendar-detail-empty" id="calendar-detail-empty">
+                  <span class="page-accent member-accent">Event Detail</span>
+                  <h3>Select an event</h3>
+                  <p>Choose an event from the month view or the list to review staffing needs, see who is already assigned, and sign up.</p>
+                </div>
+                <div class="calendar-detail-content" id="calendar-detail-content" hidden></div>
+              </article>
             </aside>
           </div>
         </div>
@@ -165,12 +174,31 @@
               <div class="field field-span-2 checkbox-field">
                 <label class="inline-checkbox" for="calendar-signup-open">
                   <input id="calendar-signup-open" name="signup_open" type="checkbox">
-                  <span>Show this event on the signup page</span>
+                  <span>Allow members to claim slots on the calendar</span>
                 </label>
               </div>
-              <div class="field field-span-2" id="calendar-signup-url-shell" hidden>
-                <label for="calendar-signup-url">Signup URL</label>
-                <input id="calendar-signup-url" name="signup_url" type="url" placeholder="https://www.signupgenius.com/">
+              <div class="field field-span-2">
+                <label>Requested Certifications</label>
+                <p class="field-help">Set the number of AEMT, EMT, EMR, and 68W members needed. Only matching certifications can claim those slots.</p>
+                <div class="signup-requirement-grid">
+                  <div class="field">
+                    <label for="calendar-slot-aemt">AEMT Slots</label>
+                    <input id="calendar-slot-aemt" name="slots_aemt" type="number" min="0" step="1" value="0">
+                  </div>
+                  <div class="field">
+                    <label for="calendar-slot-emt">EMT Slots</label>
+                    <input id="calendar-slot-emt" name="slots_emt" type="number" min="0" step="1" value="0">
+                  </div>
+                  <div class="field">
+                    <label for="calendar-slot-emr">EMR Slots</label>
+                    <input id="calendar-slot-emr" name="slots_emr" type="number" min="0" step="1" value="0">
+                  </div>
+                  <div class="field">
+                    <label for="calendar-slot-68w">68W Slots</label>
+                    <input id="calendar-slot-68w" name="slots_68w" type="number" min="0" step="1" value="0">
+                  </div>
+                </div>
+                <p class="field-help">Closing signups stops new claims but keeps current assignments visible.</p>
               </div>
               <div class="button-row staff-form-actions">
                 <button class="button button-primary" id="calendar-form-submit" type="submit">Save event</button>
@@ -195,7 +223,7 @@
           <article class="auth-card roster-login-card" id="calendar-staff-login-shell" hidden aria-hidden="true" style="display: none;">
             <span class="page-accent staff-accent">Staff Login</span>
             <h2>Need to edit the calendar?</h2>
-            <p>Sign in with a staff account to add, edit, or remove events. Those changes will sync to the homepage and signup page automatically.</p>
+            <p>Sign in with a staff account to add, edit, or remove events, manage staffing requirements, and control whether members can claim open slots.</p>
             <form class="auth-form" id="calendar-login-form">
               <div class="field">
                 <label for="calendar-email">Email</label>
@@ -216,7 +244,7 @@
     <footer class="site-footer">
       <div class="container footer-shell">
         <p><strong>CEMS</strong> | Cadet Emergency Medical Services</p>
-        <p>Calendar events are managed in Supabase and synced across the member pages. <span data-current-year></span></p>
+        <p>Calendar events, staffing requirements, and member signups are managed in Supabase. <span data-current-year></span></p>
       </div>
     </footer>
   </div>

@@ -10,8 +10,80 @@ const config = {
   portalRedirect: rawConfig.portalRedirect || "member-home.html",
 };
 
+const CERTIFICATION_ORDER = ["AEMT", "EMT", "EMR", "68W"];
+const pendingSessionStorageKey = "cems-pending-session";
+const calendarEventSelect = `
+  id,
+  title,
+  event_date,
+  start_time,
+  end_time,
+  location,
+  category,
+  description,
+  signup_open,
+  signup_url,
+  signup_requirements:event_signup_requirements(
+    id,
+    certification,
+    slots_needed,
+    signups:event_signups(
+      id,
+      member_id,
+      member:roster_members(
+        id,
+        name,
+        certification
+      )
+    )
+  )
+`;
+
+let supabaseClient = null;
+
 function looksConfigured(value) {
   return Boolean(value) && !/YOUR_|REPLACE_|CHANGE_ME/i.test(value);
+}
+
+function compareByCertification(left, right) {
+  const leftIndex = CERTIFICATION_ORDER.indexOf(left);
+  const rightIndex = CERTIFICATION_ORDER.indexOf(right);
+
+  if (leftIndex === -1 && rightIndex === -1) {
+    return String(left || "").localeCompare(String(right || ""));
+  }
+
+  if (leftIndex === -1) {
+    return 1;
+  }
+
+  if (rightIndex === -1) {
+    return -1;
+  }
+
+  return leftIndex - rightIndex;
+}
+
+function normalizeEventSignup(row) {
+  return {
+    id: row.id,
+    memberId: row.member_id || row.member?.id || "",
+    memberName: row.member?.name || "",
+    certification: row.member?.certification || "",
+  };
+}
+
+function normalizeSignupRequirement(row) {
+  const signups = (row.signups || [])
+    .map(normalizeEventSignup)
+    .sort((left, right) => String(left.memberName || "").localeCompare(String(right.memberName || "")));
+
+  return {
+    id: row.id,
+    certification: row.certification || "",
+    slotsNeeded: Number(row.slots_needed || 0),
+    signups,
+  };
 }
 
 function normalizeCalendarEvent(row) {
@@ -26,6 +98,22 @@ function normalizeCalendarEvent(row) {
     description: row.description || "",
     signupOpen: Boolean(row.signup_open),
     signupUrl: row.signup_url || "",
+    signupRequirements: (row.signup_requirements || [])
+      .map(normalizeSignupRequirement)
+      .sort((left, right) => compareByCertification(left.certification, right.certification)),
+  };
+}
+
+function normalizeCurrentMember(row) {
+  if (!row) {
+    return null;
+  }
+
+  return {
+    id: row.id,
+    name: row.name || "",
+    certification: row.certification || "",
+    contact: row.contact || "",
   };
 }
 
@@ -39,8 +127,28 @@ function serializeCalendarEvent(event) {
     category: event.category,
     description: event.description,
     signup_open: Boolean(event.signupOpen),
-    signup_url: event.signupOpen ? event.signupUrl || "" : "",
+    signup_url: "",
   };
+}
+
+async function fetchCalendarEventById(id) {
+  const supabase = getSupabaseClient();
+
+  if (!supabase) {
+    throw new Error("Supabase is not configured yet.");
+  }
+
+  const { data, error } = await supabase
+    .from(config.eventTable)
+    .select(calendarEventSelect)
+    .eq("id", id)
+    .maybeSingle();
+
+  if (error) {
+    throw error;
+  }
+
+  return data ? normalizeCalendarEvent(data) : null;
 }
 
 export function isSupabaseConfigured() {
@@ -71,9 +179,6 @@ export function clearPendingSession() {
 
   window.sessionStorage.removeItem(pendingSessionStorageKey);
 }
-
-let supabaseClient = null;
-const pendingSessionStorageKey = "cems-pending-session";
 
 export function getSupabaseClient() {
   if (!isSupabaseConfigured()) {
@@ -257,6 +362,33 @@ export async function fetchRosterMembers() {
   return data || [];
 }
 
+export async function fetchCurrentRosterMember() {
+  const supabase = getSupabaseClient();
+
+  if (!supabase) {
+    throw new Error("Supabase is not configured yet.");
+  }
+
+  const context = await getSessionContext();
+  const email = context.profile?.email || context.user?.email || "";
+
+  if (!email) {
+    return null;
+  }
+
+  const { data, error } = await supabase
+    .from(config.rosterTable)
+    .select("id, name, certification, contact")
+    .ilike("contact", email)
+    .limit(1);
+
+  if (error) {
+    throw error;
+  }
+
+  return normalizeCurrentMember(data?.[0] || null);
+}
+
 export async function createRosterMember(member) {
   const supabase = getSupabaseClient();
 
@@ -321,7 +453,7 @@ export async function fetchCalendarEvents() {
 
   const { data, error } = await supabase
     .from(config.eventTable)
-    .select("id, title, event_date, start_time, end_time, location, category, description, signup_open, signup_url")
+    .select(calendarEventSelect)
     .order("event_date", { ascending: true })
     .order("start_time", { ascending: true });
 
@@ -342,14 +474,20 @@ export async function createCalendarEvent(event) {
   const { data, error } = await supabase
     .from(config.eventTable)
     .insert(serializeCalendarEvent(event))
-    .select("id, title, event_date, start_time, end_time, location, category, description, signup_open, signup_url")
+    .select("id")
     .single();
 
   if (error) {
     throw error;
   }
 
-  return normalizeCalendarEvent(data);
+  const createdEvent = await fetchCalendarEventById(data.id);
+
+  if (!createdEvent) {
+    throw new Error("The event was created, but it could not be reloaded.");
+  }
+
+  return createdEvent;
 }
 
 export async function updateCalendarEvent(id, event) {
@@ -363,14 +501,84 @@ export async function updateCalendarEvent(id, event) {
     .from(config.eventTable)
     .update(serializeCalendarEvent(event))
     .eq("id", id)
-    .select("id, title, event_date, start_time, end_time, location, category, description, signup_open, signup_url")
+    .select("id")
     .single();
 
   if (error) {
     throw error;
   }
 
-  return normalizeCalendarEvent(data);
+  const updatedEvent = await fetchCalendarEventById(data.id);
+
+  if (!updatedEvent) {
+    throw new Error("The event was updated, but it could not be reloaded.");
+  }
+
+  return updatedEvent;
+}
+
+export async function syncEventSignupRequirements(eventId, requirements) {
+  const supabase = getSupabaseClient();
+
+  if (!supabase) {
+    throw new Error("Supabase is not configured yet.");
+  }
+
+  const sanitizedRequirements = (requirements || [])
+    .map((requirement) => ({
+      certification: requirement.certification,
+      slots_needed: Number(requirement.slotsNeeded || requirement.slots_needed || 0),
+    }))
+    .filter((requirement) => requirement.certification && requirement.slots_needed > 0);
+
+  const { error } = await supabase.rpc("set_event_signup_requirements", {
+    p_event_id: eventId,
+    p_requirements: sanitizedRequirements,
+  });
+
+  if (error) {
+    throw error;
+  }
+
+  const updatedEvent = await fetchCalendarEventById(eventId);
+
+  if (!updatedEvent) {
+    throw new Error("The event slots were updated, but the event could not be reloaded.");
+  }
+
+  return updatedEvent;
+}
+
+export async function signUpForEvent(eventId) {
+  const supabase = getSupabaseClient();
+
+  if (!supabase) {
+    throw new Error("Supabase is not configured yet.");
+  }
+
+  const { error } = await supabase.rpc("sign_up_for_event", {
+    p_event_id: eventId,
+  });
+
+  if (error) {
+    throw error;
+  }
+}
+
+export async function withdrawFromEvent(eventId) {
+  const supabase = getSupabaseClient();
+
+  if (!supabase) {
+    throw new Error("Supabase is not configured yet.");
+  }
+
+  const { error } = await supabase.rpc("withdraw_from_event", {
+    p_event_id: eventId,
+  });
+
+  if (error) {
+    throw error;
+  }
 }
 
 export async function deleteCalendarEvent(id) {
