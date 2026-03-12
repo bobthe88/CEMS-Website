@@ -3,6 +3,6 @@ window.CEMS_SUPABASE_CONFIG = {
   publishableKey: "sb_publishable_kNpZ2X8qYUya6QaAvaGWQQ_KBCMYxaa",
   rosterTable: "roster_members",
   profileTable: "user_profiles",
-  portalRedirect: "index.html",
+  portalRedirect: "member-home.html",
 };
 

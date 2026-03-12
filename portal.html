@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>CEMS | Member and Staff Portal</title>
-  <meta name="description" content="Member and staff login portal for the protected CEMS site.">
+  <meta name="description" content="Member and staff login portal for the private CEMS member site.">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600;700&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -15,7 +15,7 @@
   <link rel="apple-touch-icon" sizes="180x180" href="assets/images/apple-touch-icon.png" />
   <link rel="manifest" href="assets/images/site.webmanifest" />
 </head>
-<body data-page="portal">
+<body data-page="portal" data-nav-scope="public">
   <div class="page-shell">
     <header class="site-header">
       <div class="top-stripe"></div>
@@ -30,14 +30,12 @@
           </span>
         </a>
         <button class="nav-toggle" type="button" aria-expanded="false" aria-controls="site-nav">Menu</button>
-        <nav class="site-nav" id="site-nav">
+                <nav class="site-nav" id="site-nav">
           <a href="index.html" data-page="home">Home</a>
-          <a href="roster.html" data-page="roster">Roster</a>
-          <a href="calendar.html" data-page="calendar">Calendar</a>
-          <a href="signup.html" data-page="signup">Sign Up</a>
-          <a href="gallery.html" data-page="gallery">Gallery</a>
+          <a href="about.html" data-page="about">About Us</a>
+          <a href="request-service.html" data-page="request-services">Request Services</a>
           <a href="leadership.html" data-page="leadership">Leadership</a>
-          <a href="documents.html" data-page="documents">Documents</a>
+          <a href="portal.html" data-page="portal">Portal</a>
         </nav>
       </div>
     </header>
@@ -47,7 +45,7 @@
         <div class="container auth-grid">
           <article class="auth-card">
             <h2>Member Login</h2>
-            <p>Login here to use the website!</p>
+            <p>Use this login to enter the private member site.</p>
             <form data-login-form="member" class="auth-form">
               <div class="field">
                 <label for="member-email">Email</label>
@@ -63,7 +61,7 @@
 
           <article class="auth-card">
             <h2>Staff Login</h2>
-            <p>Login here to make changes to the roster, calendar, or any other parts of the website.</p>
+            <p>Staff can sign in here to access the private member site and use editing tools on the roster and calendar pages.</p>
             <form data-login-form="staff" class="auth-form">
               <div class="field">
                 <label for="staff-email">Email</label>
@@ -95,7 +93,7 @@
     <footer class="site-footer">
       <div class="container footer-shell">
         <p><strong>CEMS</strong> | Cadet Emergency Medical Services</p>
-        <p>Portal access powered by Supabase. <span data-current-year></span></p>
+        <p>Portal access opens the private member site. <span data-current-year></span></p>
       </div>
     </footer>
   </div>

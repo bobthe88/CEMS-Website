@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>CEMS | Home</title>
-  <meta name="description" content="Cadet Emergency Medical Services club website with roster, calendar, signup information, leadership structure, gallery, and documents.">
+  <meta name="description" content="Public website for Cadet Emergency Medical Services with club information, leadership, service requests, and member portal access.">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600;700&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -15,13 +15,13 @@
   <link rel="apple-touch-icon" sizes="180x180" href="assets/images/apple-touch-icon.png" />
   <link rel="manifest" href="assets/images/site.webmanifest" />
 </head>
-<body data-page="home" data-requires-auth="member" data-auth-state="pending" aria-busy="true">
+<body data-page="home" data-nav-scope="public">
   <div class="page-shell">
     <header class="site-header">
       <div class="top-stripe"></div>
       <div class="container nav-shell">
         <a class="brand" href="index.html">
-                    <span class="brand-mark">
+          <span class="brand-mark">
             <img src="assets/images/CES%20Logo%20(1).png" alt="CEMS logo">
           </span>
           <span class="brand-text">
@@ -32,12 +32,10 @@
         <button class="nav-toggle" type="button" aria-expanded="false" aria-controls="site-nav">Menu</button>
         <nav class="site-nav" id="site-nav">
           <a href="index.html" data-page="home">Home</a>
-          <a href="roster.html" data-page="roster">Roster</a>
-          <a href="calendar.html" data-page="calendar">Calendar</a>
-          <a href="signup.html" data-page="signup">Sign Up</a>
-          <a href="gallery.html" data-page="gallery">Gallery</a>
+          <a href="about.html" data-page="about">About Us</a>
+          <a href="request-service.html" data-page="request-services">Request Services</a>
           <a href="leadership.html" data-page="leadership">Leadership</a>
-          <a href="documents.html" data-page="documents">Documents</a>
+          <a href="portal.html" data-page="portal">Portal</a>
         </nav>
       </div>
     </header>
@@ -47,32 +45,89 @@
         <div class="container hero-grid">
           <div class="hero-copy">
             <div>
-              <h1>Cadet Emergency Services</h1>
-              <h3>Welcome to the Cadet EMS homepage. Please use the tabs at the top to navigate to your desired destination.</h3>
+              <p class="eyebrow">Public Site</p>
+              <h1>Cadet Emergency Medical Services</h1>
+            </div>
+            <p>
+              CEMS provides disciplined emergency medical support for campus events, training environments, and coordinated response requirements.
+              This public site covers who we are, how to request support, and how members access the private portal.
+            </p>
+            <div class="button-row hero-actions">
+              <a class="button button-primary" href="request-service.html">Request Services</a>
+              <a class="button button-secondary" href="about.html">About Us</a>
+              <a class="button button-secondary" href="portal.html">Member Portal</a>
+            </div>
+            <div class="detail-list">
+              <span>Event medical coverage</span>
+              <span>Operational readiness</span>
+              <span>Structured member development</span>
             </div>
           </div>
 
           <div class="hero-visual">
             <article class="placeholder-card hero-logo-card">
-              <p>Swap this placeholder for your official logo once you have the final file ready.</p>
+              <span class="placeholder-label">Mission Focus</span>
+              <h3>Professional support with a clear chain of coordination.</h3>
+              <p>Use the public pages to understand our mission and request support. Members should continue through the portal for internal resources.</p>
             </article>
             <article class="placeholder-card hero-photo-card">
-              <span class="placeholder-label">Future Hero Photo</span>
-              <p>Add a strong action image here of members training, covering an event, or standing by in uniform.</p>
+              <span class="placeholder-label">Public Access</span>
+              <p>Leadership details and service-request information stay public. Internal calendars, documents, photos, and roster tools stay behind the member portal.</p>
             </article>
           </div>
         </div>
       </section>
 
-      <section class="home-upcoming-section">
+      <section>
         <div class="container">
           <div class="section-heading">
             <div>
-              <p class="eyebrow">Upcoming Activity</p>
-              <h2>Next on the schedule.</h2>
+              <p class="eyebrow">Start Here</p>
+              <h2>Choose the right part of the site.</h2>
             </div>
+            <p>Public visitors can learn about the club, review leadership contacts, and request support. Members should continue through the portal for internal pages.</p>
           </div>
-          <div class="card-grid" id="home-events"></div>
+          <div class="quick-links-grid">
+            <a class="quick-link-card" href="about.html">
+              <span class="page-accent">About Us</span>
+              <h3>Mission and role</h3>
+              <p>Learn what CEMS does, how the club operates, and what kind of support we provide.</p>
+              <span class="text-link">Open page</span>
+            </a>
+            <a class="quick-link-card" href="request-service.html">
+              <span class="page-accent">Request Services</span>
+              <h3>Submit a support request</h3>
+              <p>See what information to send us for event medical coverage or coordination support.</p>
+              <span class="text-link">Open page</span>
+            </a>
+            <a class="quick-link-card" href="leadership.html">
+              <span class="page-accent">Leadership</span>
+              <h3>Contact the chain of leadership</h3>
+              <p>Review the club leadership structure and find the right point of contact.</p>
+              <span class="text-link">Open page</span>
+            </a>
+            <a class="quick-link-card" href="portal.html">
+              <span class="page-accent">Portal</span>
+              <h3>Members continue here</h3>
+              <p>Use the portal to access the private member home, roster, calendar, gallery, and documents.</p>
+              <span class="text-link">Open page</span>
+            </a>
+          </div>
+        </div>
+      </section>
+
+      <section>
+        <div class="container split-grid">
+          <article class="note-card">
+            <span class="page-accent">Public Information</span>
+            <h3>Built for outside partners and prospective members</h3>
+            <p>This side of the site is intended for visitors who need basic club information, leadership contacts, and a clear path to request support.</p>
+          </article>
+          <article class="note-card">
+            <span class="page-accent">Private Resources</span>
+            <h3>Internal tools stay behind login</h3>
+            <p>The roster, live calendar, member signup tools, gallery, and document library now live in the private member section after portal login.</p>
+          </article>
         </div>
       </section>
     </main>
@@ -80,12 +135,11 @@
     <footer class="site-footer">
       <div class="container footer-shell">
         <p><strong>CEMS</strong> | Cadet Emergency Medical Services</p>
-        <p>Club copy lives in <code>assets/js/data.js</code>; calendar events sync from Supabase. <span data-current-year></span></p>
+        <p>Public information lives here; member resources continue through the portal. <span data-current-year></span></p>
       </div>
     </footer>
   </div>
 
-  <script src="assets/js/supabase-config.js"></script>
-  <script type="module" src="assets/js/auth-guard.js"></script>
+  <script src="assets/js/site.js"></script>
 </body>
 </html>

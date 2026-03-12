@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>CEMS | Member Home</title>
+  <meta name="description" content="Private member landing page for Cadet Emergency Medical Services with internal resources and upcoming activity.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600;700&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="assets/css/styles.css">
+  <link rel="icon" type="image/png" href="assets/images/favicon-96x96.png" sizes="96x96" />
+  <link rel="icon" type="image/svg+xml" href="assets/images/favicon.svg" />
+  <link rel="shortcut icon" href="assets/images/favicon.ico" />
+  <link rel="apple-touch-icon" sizes="180x180" href="assets/images/apple-touch-icon.png" />
+  <link rel="manifest" href="assets/images/site.webmanifest" />
+</head>
+<body data-page="member-home" data-nav-scope="private" data-requires-auth="member" data-auth-state="pending" aria-busy="true">
+  <div class="page-shell">
+    <header class="site-header">
+      <div class="top-stripe"></div>
+      <div class="container nav-shell">
+        <a class="brand" href="member-home.html">
+          <span class="brand-mark">
+            <img src="assets/images/CES%20Logo%20(1).png" alt="CEMS logo">
+          </span>
+          <span class="brand-text">
+            <strong>Cadet EMS</strong>
+            <small>Emergency Medical Services Club</small>
+          </span>
+        </a>
+        <button class="nav-toggle" type="button" aria-expanded="false" aria-controls="site-nav">Menu</button>
+        <nav class="site-nav" id="site-nav">
+          <a href="member-home.html" data-page="member-home">Member Home</a>
+          <a href="roster.html" data-page="roster">Roster</a>
+          <a href="calendar.html" data-page="calendar">Calendar</a>
+          <a href="signup.html" data-page="signup">Sign Up</a>
+          <a href="gallery.html" data-page="gallery">Gallery</a>
+          <a href="documents.html" data-page="documents">Documents</a>
+        </nav>
+      </div>
+    </header>
+
+    <main>
+      <section class="hero-section">
+        <div class="container hero-grid">
+          <div class="hero-copy">
+            <div>
+              <p class="eyebrow">Private Member Site</p>
+              <h1>Member resources and internal updates.</h1>
+            </div>
+            <p>
+              This private landing page is the jump point for the live roster, mission calendar, signup workflow, member gallery, and internal documents.
+              Staff editing tools remain on the roster and calendar pages.
+            </p>
+            <div class="button-row hero-actions">
+              <a class="button button-primary" href="roster.html">Open Roster</a>
+              <a class="button button-secondary" href="calendar.html">Open Calendar</a>
+              <a class="button button-secondary" href="signup.html">View Signups</a>
+            </div>
+            <div class="detail-list">
+              <span>Protected member access</span>
+              <span>Live Supabase roster and calendar</span>
+              <span>Staff editing on key pages</span>
+            </div>
+          </div>
+
+          <div class="hero-visual">
+            <article class="placeholder-card hero-logo-card">
+              <span class="placeholder-label">Member Resources</span>
+              <h3>Everything internal starts here.</h3>
+              <p>Use the navigation above for the current roster, the shared calendar, signup opportunities, the photo gallery, and club documents.</p>
+            </article>
+            <article class="placeholder-card hero-photo-card">
+              <span class="placeholder-label">Staff Note</span>
+              <p>Staff accounts can manage roster records on the roster page and calendar events on the calendar page after signing in.</p>
+            </article>
+          </div>
+        </div>
+      </section>
+
+      <section>
+        <div class="container">
+          <div class="section-heading">
+            <div>
+              <p class="eyebrow">Quick Access</p>
+              <h2>Go straight to the page you need.</h2>
+            </div>
+            <p>The private navigation is focused only on member-facing pages so the internal tools stay easy to reach after login.</p>
+          </div>
+          <div class="quick-links-grid">
+            <a class="quick-link-card" href="roster.html">
+              <span class="page-accent">Roster</span>
+              <h3>Member directory</h3>
+              <p>View the roster, search members, and use staff tools to update member records.</p>
+              <span class="text-link">Open roster</span>
+            </a>
+            <a class="quick-link-card" href="calendar.html">
+              <span class="page-accent">Calendar</span>
+              <h3>Mission schedule</h3>
+              <p>See upcoming staffing, training, and weekend events from the shared live calendar.</p>
+              <span class="text-link">Open calendar</span>
+            </a>
+            <a class="quick-link-card" href="signup.html">
+              <span class="page-accent">Sign Up</span>
+              <h3>Open opportunities</h3>
+              <p>Check which events are open for signup and move into the external signup workflow.</p>
+              <span class="text-link">Open signups</span>
+            </a>
+            <a class="quick-link-card" href="gallery.html">
+              <span class="page-accent">Gallery</span>
+              <h3>Internal photo library</h3>
+              <p>Review training, event, and team imagery in the protected member-only gallery.</p>
+              <span class="text-link">Open gallery</span>
+            </a>
+          </div>
+        </div>
+      </section>
+
+      <section class="home-upcoming-section">
+        <div class="container">
+          <div class="section-heading">
+            <div>
+              <p class="eyebrow">Upcoming Activity</p>
+              <h2>Next on the internal schedule.</h2>
+            </div>
+            <p>The cards below pull from the shared event data that also feeds the private calendar and signup pages.</p>
+          </div>
+          <div class="card-grid" id="home-events"></div>
+        </div>
+      </section>
+    </main>
+
+    <footer class="site-footer">
+      <div class="container footer-shell">
+        <p><strong>CEMS</strong> | Cadet Emergency Medical Services</p>
+        <p>Private member tools live here after portal login. <span data-current-year></span></p>
+      </div>
+    </footer>
+  </div>
+
+  <script src="assets/js/supabase-config.js"></script>
+  <script type="module" src="assets/js/auth-guard.js"></script>
+</body>
+</html>

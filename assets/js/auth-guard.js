@@ -1,4 +1,4 @@
-﻿import {
+import {
   isSupabaseConfigured,
   onAuthStateChange,
   restorePendingSession,
@@ -101,7 +101,7 @@ async function loadProtectedPageScripts() {
 
   await loadScript("assets/js/data.js");
 
-  if (page === "home" || page === "signup") {
+  if (page === "member-home" || page === "signup") {
     await loadScript("assets/js/events-bootstrap.js", { module: true });
   }
 

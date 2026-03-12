@@ -14,7 +14,7 @@ const state = {
 
 const authReturnStorageKey = "cems-auth-return";
 const postLoginPathStorageKey = "cems-post-login-path";
-const defaultProtectedPath = "index.html";
+const defaultProtectedPath = "member-home.html";
 
 const messageShell = document.getElementById("auth-message");
 const sessionShell = document.getElementById("auth-session");
@@ -117,13 +117,13 @@ function renderSession(context) {
   }
 
   const returnTarget = getRequestedPath();
-  const actionLabel = returnTarget === defaultProtectedPath ? "Open site" : "Continue";
+  const actionLabel = returnTarget === defaultProtectedPath ? "Open member site" : "Continue";
 
   sessionShell.hidden = false;
   sessionCopy.innerHTML = `
     <span class="page-accent">Signed In</span>
     <h3>${context.user.email}</h3>
-    <p>You are signed in with <strong>${context.role}</strong> access. Members can browse the protected site. Staff can also create, edit, and delete roster records.</p>
+    <p>You are signed in with <strong>${context.role}</strong> access. Members can browse the private member site. Staff can also create, edit, and delete roster and calendar records.</p>
   `;
   sessionActions.innerHTML = `
     <a class="button button-primary" href="${returnTarget}">${actionLabel}</a>
@@ -165,9 +165,9 @@ async function refreshSession() {
     renderSession(context);
 
     if (!context.user) {
-      setMessage("Use the member login to open the protected site or the staff login for roster management.", "info");
+      setMessage("Use the member login to open the private member site or the staff login for editing access.", "info");
     } else {
-      setMessage("You are already signed in. You can continue to the protected site now.", "success");
+      setMessage("You are already signed in. You can continue to the private member site now.", "success");
     }
   } catch (error) {
     setMessage(error.message || "Unable to read the current session.", "error");
@@ -219,7 +219,7 @@ async function handleLoginSubmit(event) {
 
     const returnTarget = getRequestedPath();
 
-    setMessage("Authentication successful. Redirecting to the protected site...", "success");
+    setMessage("Authentication successful. Redirecting to the private member site...", "success");
     window.sessionStorage.setItem(authReturnStorageKey, "1");
     window.sessionStorage.setItem(postLoginPathStorageKey, returnTarget);
 

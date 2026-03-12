@@ -7,7 +7,7 @@ const config = {
   rosterTable: rawConfig.rosterTable || "roster_members",
   eventTable: rawConfig.eventTable || "calendar_events",
   profileTable: rawConfig.profileTable || "user_profiles",
-  portalRedirect: rawConfig.portalRedirect || "index.html",
+  portalRedirect: rawConfig.portalRedirect || "member-home.html",
 };
 
 function looksConfigured(value) {

@@ -15,13 +15,13 @@
   <link rel="apple-touch-icon" sizes="180x180" href="assets/images/apple-touch-icon.png" />
   <link rel="manifest" href="assets/images/site.webmanifest" />
 </head>
-<body data-page="leadership" data-requires-auth="member" data-auth-state="pending" aria-busy="true">
+<body data-page="leadership" data-nav-scope="public">
   <div class="page-shell">
     <header class="site-header">
       <div class="top-stripe"></div>
       <div class="container nav-shell">
         <a class="brand" href="index.html">
-                    <span class="brand-mark">
+          <span class="brand-mark">
             <img src="assets/images/CES%20Logo%20(1).png" alt="CEMS logo">
           </span>
           <span class="brand-text">
@@ -32,12 +32,10 @@
         <button class="nav-toggle" type="button" aria-expanded="false" aria-controls="site-nav">Menu</button>
         <nav class="site-nav" id="site-nav">
           <a href="index.html" data-page="home">Home</a>
-          <a href="roster.html" data-page="roster">Roster</a>
-          <a href="calendar.html" data-page="calendar">Calendar</a>
-          <a href="signup.html" data-page="signup">Sign Up</a>
-          <a href="gallery.html" data-page="gallery">Gallery</a>
+          <a href="about.html" data-page="about">About Us</a>
+          <a href="request-service.html" data-page="request-services">Request Services</a>
           <a href="leadership.html" data-page="leadership">Leadership</a>
-          <a href="documents.html" data-page="documents">Documents</a>
+          <a href="portal.html" data-page="portal">Portal</a>
         </nav>
       </div>
     </header>
@@ -96,9 +94,7 @@
     </footer>
   </div>
 
-  <script src="assets/js/supabase-config.js"></script>
-  <script type="module" src="assets/js/auth-guard.js"></script>
+  <script src="assets/js/data.js"></script>
+  <script src="assets/js/site.js"></script>
 </body>
 </html>
-
-
