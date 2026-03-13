@@ -160,6 +160,7 @@ select {
 }
 
 .site-nav a,
+.site-nav button,
 .nav-toggle {
   border-radius: 999px;
   padding: 0.75rem 1rem;
@@ -169,10 +170,32 @@ select {
 }
 
 .site-nav a:hover,
+.site-nav button:hover,
 .nav-toggle:hover,
 .site-nav a.active {
   color: var(--ink);
   background: rgba(16, 20, 23, 0.06);
+}
+
+.site-nav button {
+  border: 1px solid transparent;
+  background: transparent;
+  cursor: pointer;
+}
+
+.nav-logout-button {
+  color: var(--gold-deep);
+  background: rgba(185, 146, 67, 0.14);
+  border-color: rgba(185, 146, 67, 0.24);
+}
+
+.nav-logout-button:hover {
+  background: rgba(185, 146, 67, 0.22);
+}
+
+.nav-logout-button:disabled {
+  cursor: wait;
+  opacity: 0.76;
 }
 
 .nav-toggle {

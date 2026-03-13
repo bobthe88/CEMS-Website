@@ -122,9 +122,14 @@ function initializeNavigation() {
   }
 
   if (nav && config?.links?.length) {
-    nav.innerHTML = config.links
+    const linksMarkup = config.links
       .map((link) => `<a href="${link.href}" data-page="${link.page}">${link.label}</a>`)
       .join("");
+    const logoutMarkup = navScope === "private"
+      ? '<button class="nav-logout-button" type="button" data-header-logout>Log out</button>'
+      : "";
+
+    nav.innerHTML = `${linksMarkup}${logoutMarkup}`;
   }
 
   const navLinks = document.querySelectorAll(".site-nav a");

@@ -3,12 +3,15 @@ import {
   isSupabaseConfigured,
   onAuthStateChange,
   restorePendingSession,
+  signOutCurrentUser,
   waitForSessionContext,
 } from "./supabase-client.js";
 
+const publicHomePath = "index.html";
 const portalPath = "portal.html";
 const postLoginPathStorageKey = "cems-post-login-path";
 const authReturnStorageKey = "cems-auth-return";
+let logoutInProgress = false;
 
 function getCurrentPath() {
   const path = window.location.pathname.split("/").pop() || "index.html";
@@ -51,7 +54,26 @@ function clearAuthReturnFlag() {
   window.sessionStorage.removeItem(authReturnStorageKey);
 }
 
+function clearStoredNavigationState() {
+  if (!window.sessionStorage) {
+    return;
+  }
+
+  window.sessionStorage.removeItem(authReturnStorageKey);
+  window.sessionStorage.removeItem(postLoginPathStorageKey);
+}
+
+function redirectToPublicSite() {
+  clearStoredNavigationState();
+  window.location.replace(publicHomePath);
+}
+
 function redirectToPortal() {
+  if (logoutInProgress) {
+    redirectToPublicSite();
+    return;
+  }
+
   rememberRequestedPath();
 
   const nextPath = encodeURIComponent(getCurrentPath());
@@ -63,6 +85,35 @@ function markReady(context) {
   document.body.dataset.authRole = context.role || "member";
   document.body.setAttribute("aria-busy", "false");
   clearAuthReturnFlag();
+}
+
+async function handleHeaderLogout(event) {
+  const target = event.target instanceof Element ? event.target : null;
+  const trigger = target?.closest("[data-header-logout]");
+
+  if (!trigger || logoutInProgress) {
+    return;
+  }
+
+  event.preventDefault();
+  logoutInProgress = true;
+  trigger.disabled = true;
+  trigger.textContent = "Signing out...";
+
+  try {
+    const { error } = await signOutCurrentUser();
+
+    if (error) {
+      throw error;
+    }
+
+    redirectToPublicSite();
+  } catch (error) {
+    logoutInProgress = false;
+    trigger.disabled = false;
+    trigger.textContent = "Log out";
+    window.alert(error.message || "Unable to sign out right now.");
+  }
 }
 
 function loadScript(src, options = {}) {
@@ -110,6 +161,8 @@ async function loadProtectedPageScripts() {
 }
 
 async function initializeGuard() {
+  document.addEventListener("click", handleHeaderLogout);
+
   if (!isSupabaseConfigured()) {
     redirectToPortal();
     return;
@@ -143,6 +196,11 @@ async function initializeGuard() {
 
     onAuthStateChange(async (updatedContext) => {
       if (!updatedContext.user) {
+        if (logoutInProgress) {
+          redirectToPublicSite();
+          return;
+        }
+
         redirectToPortal();
         return;
       }
