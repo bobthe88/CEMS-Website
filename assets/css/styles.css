@@ -560,6 +560,8 @@ p {
 .quick-link-card {
   position: relative;
   isolation: isolate;
+  height: 100%;
+  grid-template-rows: auto auto 1fr auto;
 }
 
 .quick-link-card::after {
@@ -574,7 +576,7 @@ p {
 }
 
 .quick-link-card p {
-  min-height: 5.2rem;
+  min-height: 0;
 }
 
 .page-banner {

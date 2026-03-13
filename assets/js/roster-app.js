@@ -137,7 +137,7 @@ function renderStaffAuth() {
   const hasUser = Boolean(state.context.user);
   const isStaff = state.context.role === "staff";
 
-  setElementVisible(loginShell, !hasUser);
+  setElementVisible(loginShell, hasUser && !isStaff);
   setElementVisible(sessionShell, hasUser);
 
   if (!hasUser || !sessionTitle || !sessionCopy) {

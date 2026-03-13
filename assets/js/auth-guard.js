@@ -87,6 +87,25 @@ function markReady(context) {
   clearAuthReturnFlag();
 }
 
+function ensureHeaderLogoutButton() {
+  if (document.body.dataset.navScope !== "private") {
+    return;
+  }
+
+  const nav = document.querySelector(".site-nav");
+
+  if (!nav || nav.querySelector("[data-header-logout]")) {
+    return;
+  }
+
+  const button = document.createElement("button");
+  button.type = "button";
+  button.className = "nav-logout-button";
+  button.dataset.headerLogout = "";
+  button.textContent = "Log out";
+  nav.appendChild(button);
+}
+
 async function handleHeaderLogout(event) {
   const target = event.target instanceof Element ? event.target : null;
   const trigger = target?.closest("[data-header-logout]");
@@ -193,6 +212,7 @@ async function initializeGuard() {
 
     markReady(context);
     await loadProtectedPageScripts();
+    ensureHeaderLogoutButton();
 
     onAuthStateChange(async (updatedContext) => {
       if (!updatedContext.user) {
@@ -215,6 +235,7 @@ async function initializeGuard() {
       }
 
       markReady(updatedContext);
+      ensureHeaderLogoutButton();
     });
   } catch (_error) {
     redirectToPortal();
