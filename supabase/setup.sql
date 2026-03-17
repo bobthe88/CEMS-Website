@@ -291,7 +291,7 @@ as $$
     case
       when lower(members.leadership) in ('oic', 'officer in charge') then 0
       when lower(members.leadership) in ('cic', 'cadet in charge') then 1
-      when lower(members.leadership) in ('acic', 'assistant cadet in charge') then 2
+      when lower(members.leadership) in ('acic', 'assistant cadet in charge', 'executive officer', 'exec officer') then 2
       else 3
     end,
     members.name asc;

@@ -53,13 +53,25 @@ function setHeroImage(imageElement, photo) {
   imageElement.alt = photo.title || photo.folderName || "Gallery photo";
 }
 
-export function initializeHomeHeroRotator(photos) {
-  const heroSection = document.getElementById("home-gallery-hero");
-  const imageElement = document.getElementById("home-gallery-hero-image");
-  const titleElement = document.getElementById("home-gallery-hero-title");
-  const descriptionElement = document.getElementById("home-gallery-hero-description");
-  const folderElement = document.getElementById("home-gallery-hero-folder");
-  const countElement = document.getElementById("home-gallery-hero-count");
+export function initializeHomeHeroRotator(photos, options = {}) {
+  const {
+    showTitle = true,
+    showFolder = true,
+    showCount = true,
+    heroId = "home-gallery-hero",
+    imageId = "home-gallery-hero-image",
+    titleId = "home-gallery-hero-title",
+    descriptionId = "home-gallery-hero-description",
+    folderId = "home-gallery-hero-folder",
+    countId = "home-gallery-hero-count",
+  } = options;
+
+  const heroSection = document.getElementById(heroId);
+  const imageElement = document.getElementById(imageId);
+  const titleElement = document.getElementById(titleId);
+  const descriptionElement = document.getElementById(descriptionId);
+  const folderElement = document.getElementById(folderId);
+  const countElement = document.getElementById(countId);
 
   const validPhotos = Array.isArray(photos)
     ? photos.map(normalizePhoto).filter(Boolean)
@@ -68,10 +80,10 @@ export function initializeHomeHeroRotator(photos) {
   if (
     !heroSection ||
     !imageElement ||
-    !titleElement ||
     !descriptionElement ||
-    !folderElement ||
-    !countElement ||
+    (showTitle && !titleElement) ||
+    (showFolder && !folderElement) ||
+    (showCount && !countElement) ||
     !validPhotos.length
   ) {
     return () => {};
@@ -89,10 +101,19 @@ export function initializeHomeHeroRotator(photos) {
 
     heroSection.dataset.photoId = photo.id;
     setHeroImage(imageElement, photo);
-    setTextContent(titleElement, photo.title);
     setTextContent(descriptionElement, photo.description);
-    setTextContent(folderElement, photo.folderName);
-    setTextContent(countElement, `${index + 1} of ${validPhotos.length}`);
+
+    if (showTitle) {
+      setTextContent(titleElement, photo.title);
+    }
+
+    if (showFolder) {
+      setTextContent(folderElement, photo.folderName);
+    }
+
+    if (showCount) {
+      setTextContent(countElement, `${index + 1} of ${validPhotos.length}`);
+    }
   }
 
   function advancePhoto() {

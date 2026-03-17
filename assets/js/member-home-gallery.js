@@ -47,7 +47,14 @@ async function loadMemberGalleryHero() {
       : [];
 
     setHeroState(validPhotos.length > 0);
-    cleanupRotator = initializeHomeHeroRotator(validPhotos);
+    cleanupRotator = initializeHomeHeroRotator(validPhotos, {
+      heroId: "member-gallery-hero",
+      imageId: "member-gallery-hero-image",
+      titleId: "member-gallery-hero-title",
+      descriptionId: "member-gallery-hero-description",
+      folderId: "member-gallery-hero-folder",
+      countId: "member-gallery-hero-count",
+    });
   } catch (_error) {
     setHeroState(false);
   }

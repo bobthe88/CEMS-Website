@@ -149,6 +149,10 @@ function normalizeGalleryFolderName(value) {
   return normalized || "Unsorted";
 }
 
+function normalizeGalleryFolderFilterName(value) {
+  return String(value || "").replace(/\s+/g, " ").trim();
+}
+
 function normalizeDocumentFolderName(value) {
   const normalized = String(value || "").replace(/\s+/g, " ").trim();
   return normalized || "General";
@@ -606,18 +610,23 @@ export async function fetchCalendarEvents() {
   return (data || []).map(normalizeCalendarEvent);
 }
 
-export async function fetchGalleryPhotos() {
+export async function fetchGalleryPhotos(options = {}) {
   const supabase = getSupabaseClient();
 
   if (!supabase) {
     throw new Error("Supabase is not configured yet.");
   }
 
-  const { data, error } = await supabase
-    .from(config.galleryTable)
-    .select(galleryPhotoSelect)
-    .order("created_at", { ascending: false })
-    .order("title", { ascending: true });
+  const folderName = normalizeGalleryFolderFilterName(options.folderName);
+  let query = supabase.from(config.galleryTable).select(galleryPhotoSelect);
+
+  if (folderName) {
+    query = query.eq("folder_name", folderName);
+  }
+
+  const { data, error } = await query.order("created_at", { ascending: false }).order("title", {
+    ascending: true,
+  });
 
   if (error) {
     throw error;
@@ -626,18 +635,24 @@ export async function fetchGalleryPhotos() {
   return (data || []).map(normalizeGalleryPhoto);
 }
 
-export async function fetchAboutFeaturedPhotos() {
+export async function fetchAboutFeaturedPhotos(options = {}) {
   const supabase = getSupabaseClient();
 
   if (!supabase) {
     throw new Error("Supabase is not configured yet.");
   }
 
-  const { data, error } = await supabase
+  const folderName = normalizeGalleryFolderFilterName(options.folderName);
+  let query = supabase
     .from(config.galleryTable)
     .select(galleryPhotoSelect)
-    .not("about_feature_slot", "is", null)
-    .order("about_feature_slot", { ascending: true });
+    .not("about_feature_slot", "is", null);
+
+  if (folderName) {
+    query = query.eq("folder_name", folderName);
+  }
+
+  const { data, error } = await query.order("about_feature_slot", { ascending: true });
 
   if (error) {
     throw error;

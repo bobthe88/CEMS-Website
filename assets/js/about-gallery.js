@@ -1,6 +1,7 @@
 import { fetchAboutFeaturedPhotos, isSupabaseConfigured } from "./supabase-client.js";
 
 const MAX_FEATURED_PHOTOS = 3;
+const HOME_PAGE_GALLERY_FOLDER = "Home Page";
 
 const state = {
   initialized: false,
@@ -94,7 +95,7 @@ async function loadPhotos() {
     return [];
   }
 
-  const photos = await fetchAboutFeaturedPhotos();
+  const photos = await fetchAboutFeaturedPhotos({ folderName: HOME_PAGE_GALLERY_FOLDER });
   return (Array.isArray(photos) ? photos : [])
     .map(normalizePhoto)
     .filter((photo) => photo.imageUrl)

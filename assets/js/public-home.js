@@ -1,6 +1,8 @@
 import { fetchGalleryPhotos, isSupabaseConfigured } from "./supabase-client.js";
 import { initializeHomeHeroRotator } from "./home-hero-rotator.js";
 
+const HOME_PAGE_GALLERY_FOLDER = "Home Page";
+
 let cleanupRotator = () => {};
 
 function setHeroLoadedState(isLoaded) {
@@ -21,11 +23,15 @@ async function initializePublicHome() {
   }
 
   try {
-    const photos = await fetchGalleryPhotos();
+    const photos = await fetchGalleryPhotos({ folderName: HOME_PAGE_GALLERY_FOLDER });
     const hasVisiblePhoto = photos.some((photo) => String(photo?.imageUrl || "").trim());
 
     setHeroLoadedState(hasVisiblePhoto);
-    cleanupRotator = initializeHomeHeroRotator(photos);
+    cleanupRotator = initializeHomeHeroRotator(photos, {
+      showTitle: false,
+      showFolder: false,
+      showCount: false,
+    });
   } catch (error) {
     setHeroLoadedState(false);
     console.error("Unable to load homepage gallery photos.", error);

@@ -29,6 +29,14 @@ function normalizeLeadership(value) {
   return normalizeText(value).toLowerCase();
 }
 
+function isExecutiveOfficerRole(leadership) {
+  return leadership === "executive officer" || leadership === "exec officer";
+}
+
+function isAcicRole(leadership) {
+  return leadership === "acic" || leadership === "assistant cadet in charge";
+}
+
 function normalizeDirectoryRow(row) {
   return {
     name: normalizeText(row?.name) || "Unnamed leader",
@@ -57,7 +65,7 @@ function getTier(row) {
     return TIER_ORDER.cic;
   }
 
-  if (leadership === "acic" || leadership === "assistant cadet in charge") {
+  if (isAcicRole(leadership) || isExecutiveOfficerRole(leadership)) {
     return TIER_ORDER.acic;
   }
 
@@ -83,8 +91,12 @@ function getRoleLabel(row, fallbackLabel) {
     return "CIC";
   }
 
-  if (leadership === "acic" || leadership === "assistant cadet in charge") {
+  if (isAcicRole(leadership)) {
     return "ACIC";
+  }
+
+  if (isExecutiveOfficerRole(leadership)) {
+    return "Executive Officer";
   }
 
   return row.leadership || "Leader";
@@ -110,6 +122,11 @@ function groupByTier(rows) {
         return groups;
       }
 
+      if (isExecutiveOfficerRole(normalizeLeadership(normalizedRow.leadership))) {
+        groups.executiveOfficers.push(normalizedRow);
+        return groups;
+      }
+
       if (tier === TIER_ORDER.acic) {
         groups.acic.push(normalizedRow);
         return groups;
@@ -127,6 +144,7 @@ function groupByTier(rows) {
       oic: [],
       cic: [],
       acic: [],
+      executiveOfficers: [],
       directors: [],
       leaders: [],
     }
@@ -227,19 +245,24 @@ function buildChartMarkup(groups) {
   });
 
   const acic = groups.acic[0] || null;
-  rows.push({
-    nodes: [
-      acic
-        ? renderNode(acic, { roleLabel: "ACIC" })
-        : renderNode(null, {
-            placeholder: true,
-            roleLabel: "ACIC",
-            title: "ACIC not assigned",
-            description: "This position sits directly beneath the CIC and is not assigned in the roster yet.",
-          }),
-    ],
-    single: true,
-  });
+  const executiveOfficer = groups.executiveOfficers[0] || null;
+  const secondRowNodes = [];
+
+  if (acic) {
+    secondRowNodes.push(renderNode(acic, { roleLabel: "ACIC" }));
+  }
+
+  if (executiveOfficer) {
+    secondRowNodes.push(renderNode(executiveOfficer, { roleLabel: "Executive Officer" }));
+  }
+
+  if (secondRowNodes.length) {
+    rows.push({
+      nodes: secondRowNodes,
+      single: secondRowNodes.length === 1,
+      dual: secondRowNodes.length === 2,
+    });
+  }
 
   const directors = [...groups.directors].sort(sortByName);
   const remainingLeaders = [
@@ -247,6 +270,7 @@ function buildChartMarkup(groups) {
     ...groups.oic.slice(1),
     ...groups.cic.slice(cic ? 1 : 0),
     ...groups.acic.slice(acic ? 1 : 0),
+    ...groups.executiveOfficers.slice(executiveOfficer ? 1 : 0),
   ].sort((left, right) => {
     const tierDelta = getTier(left) - getTier(right);
     if (tierDelta !== 0) {
