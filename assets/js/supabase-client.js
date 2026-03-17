@@ -6,11 +6,13 @@ const config = {
   publishableKey: rawConfig.publishableKey || rawConfig.anonKey || "",
   rosterTable: rawConfig.rosterTable || "roster_members",
   eventTable: rawConfig.eventTable || "calendar_events",
+  galleryTable: rawConfig.galleryTable || "gallery_photos",
+  galleryBucket: rawConfig.galleryBucket || "gallery-photos",
   profileTable: rawConfig.profileTable || "user_profiles",
   portalRedirect: rawConfig.portalRedirect || "member-home.html",
 };
 
-const CERTIFICATION_ORDER = ["AEMT", "EMT", "EMR", "68W"];
+const CERTIFICATION_ORDER = ["AEMT", "EMT", "68W", "EMR"];
 const pendingSessionStorageKey = "cems-pending-session";
 const calendarEventSelect = `
   id,
@@ -37,6 +39,15 @@ const calendarEventSelect = `
       )
     )
   )
+`;
+const galleryPhotoSelect = `
+  id,
+  title,
+  description,
+  folder_name,
+  storage_path,
+  uploader_name,
+  created_at
 `;
 
 let supabaseClient = null;
@@ -114,6 +125,57 @@ function normalizeCurrentMember(row) {
     name: row.name || "",
     certification: row.certification || "",
     contact: row.contact || "",
+  };
+}
+
+function normalizeGalleryFolderName(value) {
+  const normalized = String(value || "").replace(/\s+/g, " ").trim();
+  return normalized || "Unsorted";
+}
+
+function sanitizeFileName(value) {
+  const normalized = String(value || "")
+    .normalize("NFKD")
+    .replace(/[^\x00-\x7F]/g, "")
+    .replace(/[^A-Za-z0-9._-]+/g, "-")
+    .replace(/-+/g, "-")
+    .replace(/^-+|-+$/g, "");
+
+  return normalized || "image";
+}
+
+function slugifyStorageSegment(value) {
+  const slug = String(value || "")
+    .normalize("NFKD")
+    .replace(/[^\x00-\x7F]/g, "")
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "");
+
+  return slug || "gallery";
+}
+
+function getPublicStorageUrl(bucketName, objectPath) {
+  const supabase = getSupabaseClient();
+
+  if (!supabase || !bucketName || !objectPath) {
+    return "";
+  }
+
+  const { data } = supabase.storage.from(bucketName).getPublicUrl(objectPath);
+  return data?.publicUrl || "";
+}
+
+function normalizeGalleryPhoto(row) {
+  return {
+    id: row.id,
+    title: row.title || "",
+    description: row.description || "",
+    folderName: normalizeGalleryFolderName(row.folder_name),
+    storagePath: row.storage_path || "",
+    imageUrl: getPublicStorageUrl(config.galleryBucket, row.storage_path || ""),
+    uploaderName: row.uploader_name || "",
+    createdAt: row.created_at || "",
   };
 }
 
@@ -485,6 +547,26 @@ export async function fetchCalendarEvents() {
   return (data || []).map(normalizeCalendarEvent);
 }
 
+export async function fetchGalleryPhotos() {
+  const supabase = getSupabaseClient();
+
+  if (!supabase) {
+    throw new Error("Supabase is not configured yet.");
+  }
+
+  const { data, error } = await supabase
+    .from(config.galleryTable)
+    .select(galleryPhotoSelect)
+    .order("created_at", { ascending: false })
+    .order("title", { ascending: true });
+
+  if (error) {
+    throw error;
+  }
+
+  return (data || []).map(normalizeGalleryPhoto);
+}
+
 export async function createCalendarEvent(event) {
   const supabase = getSupabaseClient();
 
@@ -568,6 +650,86 @@ export async function syncEventSignupRequirements(eventId, requirements) {
   }
 
   return updatedEvent;
+}
+
+export async function uploadGalleryPhoto(payload) {
+  const supabase = getSupabaseClient();
+
+  if (!supabase) {
+    throw new Error("Supabase is not configured yet.");
+  }
+
+  const file = payload?.file || null;
+
+  if (!(file instanceof File)) {
+    throw new Error("Choose an image file before uploading.");
+  }
+
+  if (!String(file.type || "").startsWith("image/")) {
+    throw new Error("Only image files can be uploaded to the gallery.");
+  }
+
+  const context = await getSessionContext();
+
+  if (!context.user) {
+    throw new Error("You must be signed in before uploading to the gallery.");
+  }
+
+  const currentMember = await fetchCurrentRosterMember();
+  const uploaderName = currentMember?.name || context.user.email || "CEMS Member";
+  const title = String(payload?.title || "").trim();
+  const description = String(payload?.description || "").trim();
+  const folderName = normalizeGalleryFolderName(payload?.folderName);
+
+  if (!title) {
+    throw new Error("Add a title before uploading.");
+  }
+
+  if (context.role !== "staff" && !currentMember) {
+    throw new Error("Your account must be linked to the roster before uploading photos.");
+  }
+
+  const uniqueSegment = typeof crypto?.randomUUID === "function"
+    ? crypto.randomUUID()
+    : `${Date.now()}-${Math.random().toString(16).slice(2)}`;
+  const storagePath = [
+    slugifyStorageSegment(folderName),
+    `${uniqueSegment}-${sanitizeFileName(file.name)}`,
+  ].join("/");
+
+  const { error: uploadError } = await supabase.storage
+    .from(config.galleryBucket)
+    .upload(storagePath, file, {
+      cacheControl: "3600",
+      contentType: file.type || undefined,
+      upsert: false,
+    });
+
+  if (uploadError) {
+    throw uploadError;
+  }
+
+  const record = {
+    title,
+    description,
+    folder_name: folderName,
+    storage_path: storagePath,
+    uploader_user_id: context.user.id,
+    uploader_name: uploaderName,
+  };
+
+  const { data, error } = await supabase
+    .from(config.galleryTable)
+    .insert(record)
+    .select(galleryPhotoSelect)
+    .single();
+
+  if (error) {
+    await supabase.storage.from(config.galleryBucket).remove([storagePath]);
+    throw error;
+  }
+
+  return normalizeGalleryPhoto(data);
 }
 
 export async function signUpForEvent(eventId) {

@@ -170,6 +170,12 @@ async function loadProtectedPageScripts() {
     return;
   }
 
+  if (page === "gallery") {
+    await loadScript("assets/js/site.js");
+    await loadScript("assets/js/gallery-app.js", { module: true });
+    return;
+  }
+
   await loadScript("assets/js/data.js");
 
   if (page === "member-home" || page === "signup") {

@@ -15,12 +15,18 @@ import {
   withdrawFromEvent,
 } from "./supabase-client.js";
 
-const CERTIFICATIONS = ["AEMT", "EMT", "EMR", "68W"];
+const CERTIFICATIONS = ["AEMT", "EMT", "68W", "EMR"];
+const CERTIFICATION_ELIGIBILITY = {
+  AEMT: ["AEMT", "EMT", "68W", "EMR"],
+  EMT: ["EMT", "EMR"],
+  "68W": ["68W", "EMR"],
+  EMR: ["EMR"],
+};
 const SLOT_FIELD_MAP = {
   AEMT: "slots_aemt",
   EMT: "slots_emt",
-  EMR: "slots_emr",
   "68W": "slots_68w",
+  EMR: "slots_emr",
 };
 
 const state = {
@@ -129,6 +135,38 @@ function escapeHtml(value) {
     .replace(/>/g, "&gt;")
     .replace(/\"/g, "&quot;")
     .replace(/'/g, "&#39;");
+}
+
+function getRequirementOpenSlots(requirement) {
+  const slotsNeeded = Number(requirement?.slotsNeeded || 0);
+  const filledSlots = (requirement?.signups || []).length;
+
+  return Math.max(slotsNeeded - filledSlots, 0);
+}
+
+function getEligibleRequirementForMember(event, certification) {
+  const eligibleCertifications = CERTIFICATION_ELIGIBILITY[certification];
+
+  if (!eligibleCertifications) {
+    return null;
+  }
+
+  return (event.signupRequirements || [])
+    .filter(
+      (requirement) =>
+        eligibleCertifications.includes(requirement.certification) &&
+        getRequirementOpenSlots(requirement) > 0
+    )
+    .sort((left, right) => {
+      const leftPriority = eligibleCertifications.indexOf(left.certification);
+      const rightPriority = eligibleCertifications.indexOf(right.certification);
+
+      if (leftPriority !== rightPriority) {
+        return leftPriority - rightPriority;
+      }
+
+      return String(left.certification).localeCompare(String(right.certification));
+    })[0] || null;
 }
 
 function setMessage(text, tone = "info") {
@@ -253,12 +291,6 @@ function getMemberSignup(event) {
   return null;
 }
 
-function getRequirementForCertification(event, certification) {
-  return (event.signupRequirements || []).find(
-    (requirement) => requirement.certification === certification
-  ) || null;
-}
-
 function getEventStatusTone(event) {
   const summary = getSlotSummary(event);
 
@@ -341,16 +373,6 @@ function getMemberActionState(event) {
     };
   }
 
-  const requirement = getRequirementForCertification(event, state.currentMember.certification);
-
-  if (!requirement) {
-    return {
-      kind: "blocked",
-      label: `No ${state.currentMember.certification} slots requested`,
-      note: `${event.title} is not requesting ${state.currentMember.certification} coverage right now.`,
-    };
-  }
-
   if (!event.signupOpen) {
     return {
       kind: "blocked",
@@ -359,18 +381,22 @@ function getMemberActionState(event) {
     };
   }
 
-  if ((requirement.signups || []).length >= Number(requirement.slotsNeeded || 0)) {
+  const requirement = getEligibleRequirementForMember(event, state.currentMember.certification);
+
+  if (!requirement) {
     return {
       kind: "blocked",
-      label: `${state.currentMember.certification} slots full`,
-      note: `All ${state.currentMember.certification} positions have already been claimed.`,
+      label: "No eligible open slots",
+      note: summary.openSlots
+        ? "None of the open slots match your certification level."
+        : "All staffing slots are full right now.",
     };
   }
 
   return {
     kind: "signup",
-    label: `Claim my ${state.currentMember.certification} slot`,
-    note: `${state.currentMember.name} can fill one of the open ${state.currentMember.certification} roles.`,
+    label: `Claim ${requirement.certification} slot`,
+    note: `${state.currentMember.name} can fill one of the open ${requirement.certification} roles.`,
   };
 }
 
@@ -569,7 +595,7 @@ function renderSessionUi() {
   sessionBadge.textContent = "Member Session";
   sessionBadge.className = "page-accent member-accent";
   sessionTitle.textContent = "Viewing enabled.";
-  sessionCopy.textContent = `${email} is signed in as a member. You can claim any open slot that matches your roster certification.`;
+  sessionCopy.textContent = `${email} is signed in as a member. You can claim the highest eligible open slot for your roster certification.`;
 }
 
 function setPageUi(isStaff) {
@@ -626,7 +652,7 @@ function renderDetailModal() {
   const action = getMemberActionState(selectedEvent);
   const summary = getSlotSummary(selectedEvent);
   const memberCopy = state.currentMember
-    ? `${state.currentMember.name} is rostered as ${state.currentMember.certification}.`
+    ? `${state.currentMember.name} is rostered as ${state.currentMember.certification} and can claim the highest eligible open slot for that certification.`
     : "Your signed-in account is not linked to a roster record yet.";
 
   setElementVisible(detailModal, true);

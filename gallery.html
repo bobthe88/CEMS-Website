@@ -47,11 +47,11 @@
           <div class="page-intro">
             <div>
               <p class="eyebrow">Visual Storytelling</p>
-              <h1>Show the club in action.</h1>
+              <h1>Upload, sort, and share the club in action.</h1>
             </div>
             <p>
-              A professional gallery helps visitors understand the culture of the organization. This page is built for polished event photos,
-              training imagery, leadership portraits, and team moments without feeling cluttered.
+              The gallery now pulls from live Supabase storage so members can upload new photos through the site, keep them organized in folders,
+              and maintain a clean record of training, event coverage, and team moments.
             </p>
           </div>
         </div>
@@ -61,27 +61,77 @@
         <div class="container gallery-shell">
           <div class="section-heading">
             <div>
-              <p class="eyebrow">Image Layout</p>
-              <h2>Replace placeholders with your best photos.</h2>
+              <p class="eyebrow">Gallery Control</p>
+              <h2>Manage the live photo library.</h2>
             </div>
-            <p>Each card below is ready to hold a real image path later. Until then, the placeholders keep the page looking intentional instead of unfinished.</p>
+            <p>Use the form below to upload new images, assign them to a folder, and immediately place them into the shared gallery rotation.</p>
           </div>
-          <div class="gallery-grid" id="gallery-grid"></div>
+          <div class="status-banner" id="gallery-status-message" hidden></div>
+          <div class="gallery-form-grid">
+            <article class="note-card gallery-upload-card">
+              <span class="page-accent">Upload Photo</span>
+              <h3>Add a new image</h3>
+              <p>Uploads accept standard image files and create a live gallery entry as soon as the photo is stored.</p>
+              <form class="gallery-upload-form" id="gallery-upload-form">
+                <div class="field">
+                  <label for="gallery-upload-file">Image file</label>
+                  <input id="gallery-upload-file" name="file" type="file" accept="image/*" required>
+                </div>
+                <div class="field">
+                  <label for="gallery-upload-title">Title</label>
+                  <input id="gallery-upload-title" name="title" type="text" maxlength="120" placeholder="Event Coverage on The Plain">
+                </div>
+                <div class="field">
+                  <label for="gallery-upload-folder">Folder</label>
+                  <input id="gallery-upload-folder" name="folder" type="text" maxlength="80" placeholder="Training, Staffing, Community Outreach">
+                </div>
+                <div class="field field-span-2">
+                  <label for="gallery-upload-description">Description</label>
+                  <textarea id="gallery-upload-description" name="description" rows="4" maxlength="280" placeholder="Brief context for what is happening in the photo."></textarea>
+                </div>
+                <div class="button-row">
+                  <button class="button button-primary" id="gallery-upload-submit" type="submit">Upload photo</button>
+                </div>
+              </form>
+            </article>
+
+            <article class="note-card gallery-guide-card">
+              <span class="page-accent">Organization</span>
+              <h3>Folder structure and public rotation</h3>
+              <p>Folders let you separate staffing, training, leadership, and outreach imagery while keeping the main gallery easy to scan.</p>
+              <div class="detail-list">
+                <span>Folder-aware filtering</span>
+                <span>Homepage rotation every 30 seconds</span>
+                <span>Newest uploads appear first</span>
+              </div>
+            </article>
+          </div>
         </div>
       </section>
 
       <section>
-        <div class="container split-grid">
-          <article class="note-card">
-            <span class="page-accent">Photo Advice</span>
-            <h3>Best images for this page</h3>
-            <p>Use sharp, well-lit photos with uniform standards, active patient care training, or clear club representation at events. Consistent editing will make the page feel even more polished.</p>
-          </article>
-          <article class="note-card">
-            <span class="page-accent">Folder Plan</span>
-            <h3>Keep images in one place</h3>
-            <p>Store final photos in <code>assets/images</code> and then add those image paths to the gallery entries in <code>assets/js/data.js</code>.</p>
-          </article>
+        <div class="container gallery-workspace">
+          <aside class="gallery-folder-panel">
+            <div class="section-heading compact">
+              <div>
+                <p class="eyebrow">Folders</p>
+                <h2>Browse by collection.</h2>
+              </div>
+            </div>
+            <div class="gallery-folder-list" id="gallery-folder-list"></div>
+          </aside>
+
+          <div class="gallery-results-panel">
+            <div class="section-heading compact">
+              <div>
+                <p class="eyebrow">Current View</p>
+                <h2 id="gallery-folder-title">All Photos</h2>
+              </div>
+              <p id="gallery-folder-description">The gallery is loading.</p>
+            </div>
+            <p class="empty-state gallery-empty-state" id="gallery-empty-state" hidden></p>
+            <div class="gallery-grid" id="gallery-grid"></div>
+          </div>
         </div>
       </section>
     </main>
@@ -89,7 +139,7 @@
     <footer class="site-footer">
       <div class="container footer-shell">
         <p><strong>CEMS</strong> | Cadet Emergency Medical Services</p>
-        <p>Gallery images can be linked from <code>assets/images</code>. <span data-current-year></span></p>
+        <p>Gallery photos sync from Supabase storage and can also appear on the public homepage. <span data-current-year></span></p>
       </div>
     </footer>
   </div>

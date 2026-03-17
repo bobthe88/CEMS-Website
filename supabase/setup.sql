@@ -61,6 +61,39 @@ create table if not exists public.event_signups (
   unique (event_id, member_id)
 );
 
+create table if not exists public.gallery_photos (
+  id uuid primary key default gen_random_uuid(),
+  title text not null,
+  description text not null default '',
+  folder_name text not null default 'Unsorted',
+  storage_path text not null unique,
+  uploader_user_id uuid not null references auth.users(id) on delete cascade,
+  uploader_name text not null default '',
+  created_at timestamptz not null default timezone('utc', now()),
+  updated_at timestamptz not null default timezone('utc', now())
+);
+
+alter table public.gallery_photos
+  add column if not exists description text not null default '';
+
+alter table public.gallery_photos
+  add column if not exists folder_name text not null default 'Unsorted';
+
+alter table public.gallery_photos
+  add column if not exists storage_path text;
+
+alter table public.gallery_photos
+  add column if not exists uploader_user_id uuid references auth.users(id) on delete cascade;
+
+alter table public.gallery_photos
+  add column if not exists uploader_name text not null default '';
+
+alter table public.gallery_photos
+  add column if not exists created_at timestamptz not null default timezone('utc', now());
+
+alter table public.gallery_photos
+  add column if not exists updated_at timestamptz not null default timezone('utc', now());
+
 create index if not exists event_signup_requirements_event_id_idx
   on public.event_signup_requirements (event_id);
 
@@ -72,6 +105,15 @@ create index if not exists event_signups_requirement_id_idx
 
 create index if not exists event_signups_member_id_idx
   on public.event_signups (member_id);
+
+create index if not exists gallery_photos_created_at_idx
+  on public.gallery_photos (created_at desc);
+
+create index if not exists gallery_photos_folder_name_idx
+  on public.gallery_photos (folder_name);
+
+create unique index if not exists gallery_photos_storage_path_key
+  on public.gallery_photos (storage_path);
 
 create or replace function public.set_updated_at()
 returns trigger
@@ -97,6 +139,71 @@ begin
 
   return new;
 end;
+$$;
+
+create or replace function public.certification_tier(p_certification text)
+returns integer
+language sql
+immutable
+as $$
+  select case upper(trim(coalesce(p_certification, '')))
+    when 'AEMT' then 1
+    when 'EMT' then 2
+    when '68W' then 2
+    when 'EMR' then 3
+    else 99
+  end;
+$$;
+
+create or replace function public.can_cover_certification(
+  p_member_certification text,
+  p_required_certification text
+)
+returns boolean
+language sql
+immutable
+as $$
+  select case upper(trim(coalesce(p_member_certification, '')))
+    when 'AEMT' then upper(trim(coalesce(p_required_certification, ''))) in ('AEMT', 'EMT', '68W', 'EMR')
+    when 'EMT' then upper(trim(coalesce(p_required_certification, ''))) in ('EMT', 'EMR')
+    when '68W' then upper(trim(coalesce(p_required_certification, ''))) in ('68W', 'EMR')
+    when 'EMR' then upper(trim(coalesce(p_required_certification, ''))) = 'EMR'
+    else false
+  end;
+$$;
+
+create or replace function public.certification_signup_priority(
+  p_member_certification text,
+  p_required_certification text
+)
+returns integer
+language sql
+immutable
+as $$
+  select case upper(trim(coalesce(p_member_certification, '')))
+    when 'AEMT' then case upper(trim(coalesce(p_required_certification, '')))
+      when 'AEMT' then 0
+      when 'EMT' then 1
+      when '68W' then 2
+      when 'EMR' then 3
+      else 99
+    end
+    when 'EMT' then case upper(trim(coalesce(p_required_certification, '')))
+      when 'EMT' then 0
+      when 'EMR' then 1
+      else 99
+    end
+    when '68W' then case upper(trim(coalesce(p_required_certification, '')))
+      when '68W' then 0
+      when 'EMR' then 1
+      else 99
+    end
+    when 'EMR' then case upper(trim(coalesce(p_required_certification, '')))
+      when 'EMR' then 0
+      else 99
+    end
+    else 99
+  end;
 $$;
 
 create or replace function public.set_event_signup_requirements(
@@ -231,7 +338,6 @@ declare
   event_record public.calendar_events%rowtype;
   requirement_record public.event_signup_requirements%rowtype;
   created_signup public.event_signups%rowtype;
-  signup_count integer;
 begin
   if auth_email = '' then
     raise exception 'You must be signed in to claim a slot.'
@@ -271,26 +377,34 @@ begin
     raise exception 'You are already signed up for this event.';
   end if;
 
-  select *
+  if not exists (
+    select 1
+    from public.event_signup_requirements requirements
+    where requirements.event_id = p_event_id
+      and public.can_cover_certification(member_record.certification, requirements.certification)
+  ) then
+    raise exception 'This event is not requesting any slots that match your certification level (%).',
+      member_record.certification;
+  end if;
+
+  select requirements.*
   into requirement_record
   from public.event_signup_requirements requirements
   where requirements.event_id = p_event_id
-    and requirements.certification = member_record.certification
-  order by requirements.created_at asc
+    and public.can_cover_certification(member_record.certification, requirements.certification)
+    and (
+      select count(*)
+      from public.event_signups signups
+      where signups.requirement_id = requirements.id
+    ) < requirements.slots_needed
+  order by
+    public.certification_signup_priority(member_record.certification, requirements.certification),
+    requirements.created_at asc
   limit 1
   for update;
 
   if not found then
-    raise exception 'This event is not requesting % coverage right now.', member_record.certification;
-  end if;
-
-  select count(*)
-  into signup_count
-  from public.event_signups signups
-  where signups.requirement_id = requirement_record.id;
-
-  if signup_count >= requirement_record.slots_needed then
-    raise exception 'All % slots are already full.', member_record.certification;
+    raise exception 'All eligible slots for % coverage are already full.', member_record.certification;
   end if;
 
   insert into public.event_signups (event_id, requirement_id, member_id)
@@ -374,11 +488,17 @@ create trigger set_event_signup_requirements_updated_at
   before update on public.event_signup_requirements
   for each row execute procedure public.set_updated_at();
 
+drop trigger if exists set_gallery_photos_updated_at on public.gallery_photos;
+create trigger set_gallery_photos_updated_at
+  before update on public.gallery_photos
+  for each row execute procedure public.set_updated_at();
+
 alter table public.user_profiles enable row level security;
 alter table public.roster_members enable row level security;
 alter table public.calendar_events enable row level security;
 alter table public.event_signup_requirements enable row level security;
 alter table public.event_signups enable row level security;
+alter table public.gallery_photos enable row level security;
 
 -- Remove old policies if you rerun the file.
 drop policy if exists "Users can view their own profile" on public.user_profiles;
@@ -396,6 +516,10 @@ drop policy if exists "Staff can insert signup requirements" on public.event_sig
 drop policy if exists "Staff can update signup requirements" on public.event_signup_requirements;
 drop policy if exists "Staff can delete signup requirements" on public.event_signup_requirements;
 drop policy if exists "Authenticated users can view signups" on public.event_signups;
+drop policy if exists "Public can view gallery photos" on public.gallery_photos;
+drop policy if exists "Members and staff can upload gallery photos" on public.gallery_photos;
+drop policy if exists "Rostered users can upload gallery objects" on storage.objects;
+drop policy if exists "Uploaders can delete gallery objects" on storage.objects;
 
 create policy "Users can view their own profile"
   on public.user_profiles
@@ -567,6 +691,69 @@ create policy "Authenticated users can view signups"
   for select
   to authenticated
   using (true);
+
+create policy "Public can view gallery photos"
+  on public.gallery_photos
+  for select
+  to public
+  using (true);
+
+create policy "Members and staff can upload gallery photos"
+  on public.gallery_photos
+  for insert
+  to authenticated
+  with check (
+    uploader_user_id = (select auth.uid())
+    and (
+      exists (
+        select 1
+        from public.roster_members members
+        where lower(members.contact) = lower(coalesce(auth.jwt() ->> 'email', ''))
+      )
+      or exists (
+        select 1
+        from public.user_profiles profiles
+        where profiles.user_id = (select auth.uid())
+          and profiles.role = 'staff'
+      )
+    )
+  );
+
+insert into storage.buckets (id, name, public)
+values ('gallery-photos', 'gallery-photos', true)
+on conflict (id) do update
+set name = excluded.name,
+    public = excluded.public;
+
+create policy "Rostered users can upload gallery objects"
+  on storage.objects
+  for insert
+  to authenticated
+  with check (
+    bucket_id = 'gallery-photos'
+    and (
+      exists (
+        select 1
+        from public.roster_members members
+        where lower(members.contact) = lower(coalesce(auth.jwt() ->> 'email', ''))
+      )
+      or exists (
+        select 1
+        from public.user_profiles profiles
+        where profiles.user_id = (select auth.uid())
+          and profiles.role = 'staff'
+      )
+    )
+  );
+
+create policy "Uploaders can delete gallery objects"
+  on storage.objects
+  for delete
+  to authenticated
+  using (
+    bucket_id = 'gallery-photos'
+    and owner_id = (select auth.uid()::text)
+  );
 
 revoke all on function public.set_event_signup_requirements(uuid, jsonb) from public;
 grant execute on function public.set_event_signup_requirements(uuid, jsonb) to authenticated;

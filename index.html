@@ -64,9 +64,25 @@
               <h3>Professional support with a clear chain of coordination.</h3>
               <p>Use the public pages to understand our mission and request support. Members should continue through the portal for internal resources.</p>
             </article>
-            <article class="placeholder-card hero-photo-card">
-              <span class="placeholder-label">Public Access</span>
-              <p>Leadership details and service-request information stay public. Internal calendars, documents, photos, and roster tools stay behind the member portal.</p>
+            <article class="placeholder-card hero-photo-card home-gallery-card" id="home-gallery-hero">
+              <img
+                class="home-gallery-image"
+                id="home-gallery-hero-image"
+                src="data:image/gif;base64,R0lGODlhAQABAAAAACw="
+                alt=""
+                loading="eager"
+                decoding="async"
+              >
+              <div class="home-gallery-overlay">
+                <div class="home-gallery-meta">
+                  <span class="placeholder-label" id="home-gallery-hero-folder">Featured Gallery</span>
+                  <span class="home-gallery-count" id="home-gallery-hero-count">Awaiting photos</span>
+                </div>
+                <div class="home-gallery-copy">
+                  <h3 id="home-gallery-hero-title">Live scenes from the member gallery.</h3>
+                  <p id="home-gallery-hero-description">Upload photos on the protected gallery page and this panel will rotate through them every 30 seconds.</p>
+                </div>
+              </div>
             </article>
           </div>
         </div>
@@ -119,5 +135,7 @@
   </div>
 
   <script src="assets/js/site.js"></script>
+  <script src="assets/js/supabase-config.js"></script>
+  <script type="module" src="assets/js/public-home.js"></script>
 </body>
 </html>
