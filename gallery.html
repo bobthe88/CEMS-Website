@@ -93,17 +93,20 @@
         <div class="container gallery-shell">
           <div class="section-heading">
             <div>
-              <p class="eyebrow">Upload Control</p>
+              <p class="eyebrow">Staff Uploads</p>
               <h2>Add a new image to the gallery.</h2>
             </div>
-            <p>The upload form stays below the gallery so members can browse first, then add a new image to the right folder.</p>
+            <p>Staff can add photos below without leaving the gallery view. Members can browse the gallery above, but uploads stay locked to staff accounts.</p>
           </div>
           <div class="gallery-form-grid">
             <article class="note-card gallery-upload-card">
               <span class="page-accent">Upload Photo</span>
               <h3>Add a new image</h3>
-              <p>Uploads accept standard image files and create a live gallery entry as soon as the photo is stored.</p>
-              <form class="gallery-upload-form" id="gallery-upload-form">
+              <p>Choose an existing folder from the dropdown or create a new folder as part of the upload.</p>
+              <div class="documents-upload-locked" id="gallery-upload-locked" hidden>
+                Only staff accounts can upload photos. Members can still browse the gallery and review the folders already in use.
+              </div>
+              <form class="gallery-upload-form" id="gallery-upload-form" hidden>
                 <div class="field">
                   <label for="gallery-upload-file">Image file</label>
                   <input id="gallery-upload-file" name="file" type="file" accept="image/*" required>
@@ -114,7 +117,14 @@
                 </div>
                 <div class="field">
                   <label for="gallery-upload-folder">Folder</label>
-                  <input id="gallery-upload-folder" name="folder" type="text" maxlength="80" placeholder="Training, Staffing, Community Outreach">
+                  <select id="gallery-upload-folder" name="folder">
+                    <option value="">Use the current folder</option>
+                    <option value="__new_folder__">Create a new folder...</option>
+                  </select>
+                </div>
+                <div class="field" id="gallery-upload-folder-custom-field" hidden>
+                  <label for="gallery-upload-folder-custom">New folder name</label>
+                  <input id="gallery-upload-folder-custom" name="folder-custom" type="text" maxlength="80" placeholder="Training, Staffing, Community Outreach">
                 </div>
                 <div class="field field-span-2">
                   <label for="gallery-upload-description">Description</label>

@@ -1,12 +1,14 @@
-import { fetchGalleryPhotos, updateGalleryPhotoAboutSlot, uploadGalleryPhoto } from "./supabase-client.js";
+import { deleteGalleryPhoto, fetchGalleryPhotos, updateGalleryPhotoAboutSlot, uploadGalleryPhoto } from "./supabase-client.js";
 
 const ALL_PHOTOS_FOLDER = "__all_photos__";
 const UNSORTED_FOLDER = "Unsorted";
+const NEW_FOLDER_OPTION = "__new_folder__";
 const STATUS_TONES = new Set(["info", "success", "warning", "error"]);
 
 const state = {
   photos: [],
   selectedFolder: ALL_PHOTOS_FOLDER,
+  role: document.body.dataset.authRole || "member",
   loading: false,
   uploading: false,
   error: "",
@@ -14,6 +16,7 @@ const state = {
   lastSyncedFolder: ALL_PHOTOS_FOLDER,
   optimisticPreviewUrl: "",
   activeAboutSlotPhotoId: "",
+  activeDeletePhotoId: "",
 };
 
 const dom = {
@@ -28,7 +31,10 @@ const dom = {
   uploadTitle: null,
   uploadDescription: null,
   uploadFolder: null,
+  uploadFolderCustomField: null,
+  uploadFolderCustom: null,
   uploadSubmit: null,
+  uploadLocked: null,
 };
 
 function escapeHtml(value) {
@@ -60,6 +66,10 @@ function normalizePhoto(photo) {
     createdAt: normalizeText(photo?.createdAt),
     uploaderName: normalizeText(photo?.uploaderName),
   };
+}
+
+function isPendingPhotoId(photoId) {
+  return normalizeText(photoId).startsWith("pending-");
 }
 
 function parseDate(value) {
@@ -190,13 +200,46 @@ function setBusyState(isBusy) {
     dom.uploadSubmit.textContent = isBusy ? "Uploading..." : "Upload photo";
   }
 
-  const controls = [dom.uploadFile, dom.uploadTitle, dom.uploadDescription, dom.uploadFolder].filter(
-    Boolean
-  );
+  const controls = [
+    dom.uploadFile,
+    dom.uploadTitle,
+    dom.uploadDescription,
+    dom.uploadFolder,
+    dom.uploadFolderCustom,
+  ].filter(Boolean);
 
   controls.forEach((control) => {
     control.disabled = isBusy;
   });
+}
+
+function setUploadAccess(role = state.role) {
+  const isStaff = role === "staff";
+
+  if (dom.uploadForm) {
+    dom.uploadForm.hidden = !isStaff;
+  }
+
+  if (dom.uploadLocked) {
+    dom.uploadLocked.hidden = isStaff;
+  }
+}
+
+function setUploadFolderMode() {
+  if (!dom.uploadFolderCustomField || !dom.uploadFolder) {
+    return;
+  }
+
+  const isCustomFolder = dom.uploadFolder.value === NEW_FOLDER_OPTION;
+  dom.uploadFolderCustomField.hidden = !isCustomFolder;
+
+  if (dom.uploadFolderCustom) {
+    dom.uploadFolderCustom.required = isCustomFolder;
+
+    if (!isCustomFolder && dom.uploadFolderCustom.value) {
+      dom.uploadFolderCustom.value = "";
+    }
+  }
 }
 
 function syncUploadFolderField(folderName = state.selectedFolder) {
@@ -206,19 +249,24 @@ function syncUploadFolderField(folderName = state.selectedFolder) {
 
   const resolvedFolder =
     folderName === ALL_PHOTOS_FOLDER ? "" : normalizeFolderName(folderName);
+  const currentValue = String(dom.uploadFolder.value || "").trim();
 
   if (dom.uploadFolder.tagName === "SELECT") {
-    const optionExists = [...dom.uploadFolder.options].some((option) => option.value === resolvedFolder);
+    const shouldSync = !currentValue || currentValue === state.lastSyncedFolder;
 
-    if (resolvedFolder && !optionExists) {
-      const option = document.createElement("option");
-      option.value = resolvedFolder;
-      option.textContent = resolvedFolder;
-      dom.uploadFolder.appendChild(option);
-    }
+    if (shouldSync) {
+      const optionExists = [...dom.uploadFolder.options].some((option) => option.value === resolvedFolder);
 
-    if (resolvedFolder || dom.uploadFolder.value === "" || dom.uploadFolder.value === state.lastSyncedFolder) {
-      dom.uploadFolder.value = resolvedFolder;
+      if (resolvedFolder && optionExists) {
+        dom.uploadFolder.value = resolvedFolder;
+      } else if (resolvedFolder) {
+        dom.uploadFolder.value = NEW_FOLDER_OPTION;
+        if (dom.uploadFolderCustom) {
+          dom.uploadFolderCustom.value = resolvedFolder;
+        }
+      } else {
+        dom.uploadFolder.value = "";
+      }
     }
   } else if (typeof dom.uploadFolder.value === "string") {
     if (!dom.uploadFolder.value.trim() || dom.uploadFolder.value === state.lastSyncedFolder) {
@@ -226,6 +274,7 @@ function syncUploadFolderField(folderName = state.selectedFolder) {
     }
   }
 
+  setUploadFolderMode();
   state.lastSyncedFolder = resolvedFolder;
 }
 
@@ -303,8 +352,12 @@ function renderEmptyState(visibleCount) {
 
   const message =
     state.selectedFolder === ALL_PHOTOS_FOLDER
-      ? "No photos have been uploaded yet. Use the upload form to add the first image to the gallery."
-      : `No photos are stored in ${state.selectedFolder} yet. Upload one here to start that folder.`;
+      ? state.role === "staff"
+        ? "No photos have been uploaded yet. Staff can use the upload form below to add the first image to the gallery."
+        : "No photos have been uploaded yet."
+      : state.role === "staff"
+        ? `No photos are stored in ${state.selectedFolder} yet. Staff can upload one below to start that folder.`
+        : `No photos are stored in ${state.selectedFolder} yet.`;
 
   dom.emptyState.hidden = false;
   dom.emptyState.textContent = message;
@@ -320,6 +373,9 @@ function renderPhotoCard(photo) {
   const aboutSlotStatus = photo.aboutFeatureSlot == null
     ? "Not featured on About page."
     : `About page slot ${photo.aboutFeatureSlot}.`;
+  const showDeleteButton = state.role === "staff" && !isPendingPhotoId(photo.id);
+  const deleteBusy = state.activeDeletePhotoId === photo.id;
+  const deleteDisabled = state.activeDeletePhotoId ? "disabled" : "";
 
   return `
     <article class="gallery-photo-card${hasImage ? " has-image" : " no-image"}" data-photo-id="${escapeHtml(photo.id)}">
@@ -365,6 +421,20 @@ function renderPhotoCard(photo) {
             state.activeAboutSlotPhotoId === photo.id ? "Saving about-page selection..." : aboutSlotStatus
           )}</p>
         </div>
+        ${
+          showDeleteButton
+            ? `<div class="button-row">
+                <button
+                  class="button button-secondary button-small danger-button"
+                  type="button"
+                  data-delete-photo-id="${escapeHtml(photo.id)}"
+                  ${deleteDisabled}
+                >
+                  ${deleteBusy ? "Deleting..." : "Delete photo"}
+                </button>
+              </div>`
+            : ""
+        }
       </div>
     </article>
   `;
@@ -409,6 +479,7 @@ function renderGrid() {
   renderEmptyState(visiblePhotos.length);
   attachImageErrorFallbacks();
   bindAboutSlotActions();
+  bindDeleteActions();
 }
 
 function renderUploadFolderOptions() {
@@ -420,19 +491,26 @@ function renderUploadFolderOptions() {
   const currentValue = String(dom.uploadFolder.value || "").trim();
 
   dom.uploadFolder.innerHTML = [
-    `<option value="">Choose a folder</option>`,
+    `<option value="">Use the current folder</option>`,
     ...folders.map(
       (folder) =>
         `<option value="${escapeHtml(folder.folderName)}">${escapeHtml(folder.folderName)}</option>`
     ),
+    `<option value="${NEW_FOLDER_OPTION}">Create a new folder...</option>`,
   ].join("");
 
   if ([...dom.uploadFolder.options].some((option) => option.value === currentValue)) {
     dom.uploadFolder.value = currentValue;
+  } else if (currentValue === NEW_FOLDER_OPTION) {
+    dom.uploadFolder.value = NEW_FOLDER_OPTION;
   }
+
+  setUploadFolderMode();
 }
 
 function render() {
+  state.role = document.body.dataset.authRole || state.role;
+  setUploadAccess(state.role);
   renderFolderList();
   renderFolderHeader();
   renderUploadFolderOptions();
@@ -474,6 +552,20 @@ function upsertPhoto(photo) {
 
 function removePhotoById(photoId) {
   state.photos = state.photos.filter((photo) => photo.id !== photoId);
+}
+
+function ensureSelectedFolderExists() {
+  if (state.selectedFolder === ALL_PHOTOS_FOLDER) {
+    return;
+  }
+
+  const folderExists = state.photos.some(
+    (photo) => normalizeFolderName(photo.folderName) === state.selectedFolder
+  );
+
+  if (!folderExists) {
+    state.selectedFolder = ALL_PHOTOS_FOLDER;
+  }
 }
 
 function clearError() {
@@ -539,7 +631,12 @@ async function loadPhotos() {
     render();
 
     if (!state.photos.length) {
-      setStatus("Gallery is empty. Upload the first photo to create a folder collection.", "warning");
+      setStatus(
+        state.role === "staff"
+          ? "Gallery is empty. Staff can upload the first photo below."
+          : "Gallery is empty right now.",
+        "warning"
+      );
     } else {
       setStatus(`Loaded ${pluralize(state.photos.length, "photo", "photos")}.`, "success");
     }
@@ -599,8 +696,65 @@ function bindAboutSlotActions() {
   });
 }
 
+async function handleDeletePhoto(photoId) {
+  const resolvedPhotoId = normalizeText(photoId);
+
+  if (!resolvedPhotoId || state.activeDeletePhotoId || state.role !== "staff") {
+    return;
+  }
+
+  const photo = state.photos.find((entry) => entry.id === resolvedPhotoId);
+
+  if (!photo || isPendingPhotoId(resolvedPhotoId)) {
+    return;
+  }
+
+  const photoTitle = photo.title || "photo";
+  const confirmed = window.confirm(`Delete ${photoTitle} from the gallery?`);
+
+  if (!confirmed) {
+    return;
+  }
+
+  state.activeDeletePhotoId = resolvedPhotoId;
+  render();
+
+  try {
+    setStatus(`Deleting ${photoTitle}...`, "info");
+    await deleteGalleryPhoto(resolvedPhotoId);
+    removePhotoById(resolvedPhotoId);
+    ensureSelectedFolderExists();
+    clearError();
+    render();
+    setStatus(`${photoTitle} was removed from the gallery.`, "success");
+  } catch (error) {
+    setError(error?.message || "Unable to delete that photo.");
+  } finally {
+    state.activeDeletePhotoId = "";
+    render();
+  }
+}
+
+function bindDeleteActions() {
+  if (!dom.grid) {
+    return;
+  }
+
+  dom.grid.querySelectorAll("[data-delete-photo-id]").forEach((button) => {
+    button.addEventListener("click", () => {
+      void handleDeletePhoto(button.dataset.deletePhotoId || "");
+    });
+  });
+}
+
 function getUploadFolderValue() {
   const rawValue = normalizeText(dom.uploadFolder?.value);
+
+  if (rawValue === NEW_FOLDER_OPTION) {
+    const customValue = normalizeText(dom.uploadFolderCustom?.value);
+    return customValue ? normalizeFolderName(customValue) : "";
+  }
+
   if (rawValue) {
     return normalizeFolderName(rawValue);
   }
@@ -616,6 +770,11 @@ async function handleUploadSubmit(event) {
   event.preventDefault();
 
   if (state.uploading) {
+    return;
+  }
+
+  if (state.role !== "staff") {
+    setError("Only staff accounts can upload photos.");
     return;
   }
 
@@ -638,6 +797,11 @@ async function handleUploadSubmit(event) {
 
   if (!title) {
     setError("Add a title for the photo before uploading.");
+    return;
+  }
+
+  if (dom.uploadFolder?.value === NEW_FOLDER_OPTION && !normalizeText(dom.uploadFolderCustom?.value)) {
+    setError("Enter a new folder name before uploading.");
     return;
   }
 
@@ -702,6 +866,16 @@ function bindEvents() {
     });
   }
 
+  if (dom.uploadFolder) {
+    dom.uploadFolder.addEventListener("change", () => {
+      setUploadFolderMode();
+
+      if (dom.uploadFolder.value !== NEW_FOLDER_OPTION && dom.uploadFolderCustom) {
+        dom.uploadFolderCustom.value = "";
+      }
+    });
+  }
+
   if (dom.uploadForm) {
     dom.uploadForm.addEventListener("submit", handleUploadSubmit);
   }
@@ -719,7 +893,10 @@ function cacheDom() {
   dom.uploadTitle = document.getElementById("gallery-upload-title");
   dom.uploadDescription = document.getElementById("gallery-upload-description");
   dom.uploadFolder = document.getElementById("gallery-upload-folder");
+  dom.uploadFolderCustomField = document.getElementById("gallery-upload-folder-custom-field");
+  dom.uploadFolderCustom = document.getElementById("gallery-upload-folder-custom");
   dom.uploadSubmit = document.getElementById("gallery-upload-submit");
+  dom.uploadLocked = document.getElementById("gallery-upload-locked");
 }
 
 export async function initializeGalleryApp() {
@@ -730,6 +907,7 @@ export async function initializeGalleryApp() {
   state.initialized = true;
   cacheDom();
   bindEvents();
+  setUploadAccess();
   setBusyState(false);
   syncUploadFolderField("");
   render();

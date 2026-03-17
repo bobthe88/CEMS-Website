@@ -226,6 +226,26 @@ function normalizeGalleryPhoto(row) {
   };
 }
 
+async function fetchGalleryPhotoById(id) {
+  const supabase = getSupabaseClient();
+
+  if (!supabase) {
+    throw new Error("Supabase is not configured yet.");
+  }
+
+  const { data, error } = await supabase
+    .from(config.galleryTable)
+    .select(galleryPhotoSelect)
+    .eq("id", id)
+    .maybeSingle();
+
+  if (error) {
+    throw error;
+  }
+
+  return data ? normalizeGalleryPhoto(data) : null;
+}
+
 function normalizeDocumentRecord(row, downloadUrl = "") {
   return {
     id: row.id,
@@ -845,6 +865,10 @@ export async function uploadGalleryPhoto(payload) {
     throw new Error("You must be signed in before uploading to the gallery.");
   }
 
+  if (context.role !== "staff") {
+    throw new Error("Only staff accounts can upload gallery photos.");
+  }
+
   const currentMember = await fetchCurrentRosterMember();
   const uploaderName = currentMember?.name || context.user.email || "CEMS Member";
   const title = String(payload?.title || "").trim();
@@ -853,10 +877,6 @@ export async function uploadGalleryPhoto(payload) {
 
   if (!title) {
     throw new Error("Add a title before uploading.");
-  }
-
-  if (context.role !== "staff" && !currentMember) {
-    throw new Error("Your account must be linked to the roster before uploading photos.");
   }
 
   const uniqueSegment = typeof crypto?.randomUUID === "function"
@@ -900,6 +920,54 @@ export async function uploadGalleryPhoto(payload) {
   }
 
   return normalizeGalleryPhoto(data);
+}
+
+export async function deleteGalleryPhoto(id) {
+  const supabase = getSupabaseClient();
+
+  if (!supabase) {
+    throw new Error("Supabase is not configured yet.");
+  }
+
+  const context = await getSessionContext();
+
+  if (!context.user) {
+    throw new Error("You must be signed in before deleting gallery photos.");
+  }
+
+  if (context.role !== "staff") {
+    throw new Error("Only staff accounts can delete gallery photos.");
+  }
+
+  const resolvedPhotoId = String(id?.id || id || "").trim();
+
+  if (!resolvedPhotoId) {
+    throw new Error("Choose a gallery photo before deleting.");
+  }
+
+  const photo = await fetchGalleryPhotoById(resolvedPhotoId);
+
+  if (!photo) {
+    throw new Error("That gallery photo could not be found.");
+  }
+
+  const { error: deleteError } = await supabase.from(config.galleryTable).delete().eq("id", resolvedPhotoId);
+
+  if (deleteError) {
+    throw deleteError;
+  }
+
+  if (photo.storagePath) {
+    const { error: storageError } = await supabase.storage
+      .from(config.galleryBucket)
+      .remove([photo.storagePath]);
+
+    if (storageError) {
+      console.warn("Gallery photo record deleted, but storage cleanup failed.", storageError);
+    }
+  }
+
+  return photo;
 }
 
 export async function uploadDocument(payload) {
