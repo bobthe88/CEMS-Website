@@ -66,6 +66,22 @@ create table if not exists public.gallery_photos (
   title text not null,
   description text not null default '',
   folder_name text not null default 'Unsorted',
+  about_feature_slot integer,
+  storage_path text not null unique,
+  uploader_user_id uuid not null references auth.users(id) on delete cascade,
+  uploader_name text not null default '',
+  created_at timestamptz not null default timezone('utc', now()),
+  updated_at timestamptz not null default timezone('utc', now())
+);
+
+create table if not exists public.documents_library (
+  id uuid primary key default gen_random_uuid(),
+  title text not null,
+  description text not null default '',
+  folder_name text not null default 'General',
+  file_name text not null,
+  file_size bigint not null default 0,
+  content_type text not null default '',
   storage_path text not null unique,
   uploader_user_id uuid not null references auth.users(id) on delete cascade,
   uploader_name text not null default '',
@@ -80,6 +96,9 @@ alter table public.gallery_photos
   add column if not exists folder_name text not null default 'Unsorted';
 
 alter table public.gallery_photos
+  add column if not exists about_feature_slot integer;
+
+alter table public.gallery_photos
   add column if not exists storage_path text;
 
 alter table public.gallery_photos
@@ -92,6 +111,36 @@ alter table public.gallery_photos
   add column if not exists created_at timestamptz not null default timezone('utc', now());
 
 alter table public.gallery_photos
+  add column if not exists updated_at timestamptz not null default timezone('utc', now());
+
+alter table public.documents_library
+  add column if not exists description text not null default '';
+
+alter table public.documents_library
+  add column if not exists folder_name text not null default 'General';
+
+alter table public.documents_library
+  add column if not exists file_name text;
+
+alter table public.documents_library
+  add column if not exists file_size bigint not null default 0;
+
+alter table public.documents_library
+  add column if not exists content_type text not null default '';
+
+alter table public.documents_library
+  add column if not exists storage_path text;
+
+alter table public.documents_library
+  add column if not exists uploader_user_id uuid references auth.users(id) on delete cascade;
+
+alter table public.documents_library
+  add column if not exists uploader_name text not null default '';
+
+alter table public.documents_library
+  add column if not exists created_at timestamptz not null default timezone('utc', now());
+
+alter table public.documents_library
   add column if not exists updated_at timestamptz not null default timezone('utc', now());
 
 create index if not exists event_signup_requirements_event_id_idx
@@ -114,6 +163,19 @@ create index if not exists gallery_photos_folder_name_idx
 
 create unique index if not exists gallery_photos_storage_path_key
   on public.gallery_photos (storage_path);
+
+create unique index if not exists gallery_photos_about_feature_slot_key
+  on public.gallery_photos (about_feature_slot)
+  where about_feature_slot is not null;
+
+create index if not exists documents_library_created_at_idx
+  on public.documents_library (created_at desc);
+
+create index if not exists documents_library_folder_name_idx
+  on public.documents_library (folder_name);
+
+create unique index if not exists documents_library_storage_path_key
+  on public.documents_library (storage_path);
 
 create or replace function public.set_updated_at()
 returns trigger
@@ -204,6 +266,86 @@ as $$
     end
     else 99
   end;
+$$;
+
+create or replace function public.fetch_public_leadership_directory()
+returns table (
+  name text,
+  email text,
+  phone text,
+  leadership text
+)
+language sql
+security definer
+set search_path = public
+as $$
+  select
+    members.name,
+    members.contact as email,
+    members.phone_number as phone,
+    members.leadership
+  from public.roster_members members
+  where coalesce(trim(members.leadership), '') <> ''
+    and members.leadership <> 'Member'
+  order by
+    case
+      when lower(members.leadership) in ('oic', 'officer in charge') then 0
+      when lower(members.leadership) in ('cic', 'cadet in charge') then 1
+      when lower(members.leadership) in ('acic', 'assistant cadet in charge') then 2
+      else 3
+    end,
+    members.name asc;
+$$;
+
+create or replace function public.set_about_featured_photo(
+  p_photo_id uuid,
+  p_slot integer default null
+)
+returns void
+language plpgsql
+security definer
+set search_path = public
+as $$
+begin
+  if not exists (
+    select 1
+    from public.roster_members members
+    where lower(members.contact) = lower(coalesce(auth.jwt() ->> 'email', ''))
+  ) and not exists (
+    select 1
+    from public.user_profiles profiles
+    where profiles.user_id = (select auth.uid())
+      and profiles.role = 'staff'
+  ) then
+    raise exception 'You must be a rostered member or staff to choose About page photos.'
+      using errcode = '42501';
+  end if;
+
+  if not exists (
+    select 1
+    from public.gallery_photos photos
+    where photos.id = p_photo_id
+  ) then
+    raise exception 'Photo not found.';
+  end if;
+
+  if p_slot is not null and (p_slot < 1 or p_slot > 3) then
+    raise exception 'About page slots must be between 1 and 3.';
+  end if;
+
+  if p_slot is not null then
+    update public.gallery_photos photos
+    set about_feature_slot = null,
+        updated_at = timezone('utc', now())
+    where photos.about_feature_slot = p_slot
+      and photos.id <> p_photo_id;
+  end if;
+
+  update public.gallery_photos photos
+  set about_feature_slot = p_slot,
+      updated_at = timezone('utc', now())
+  where photos.id = p_photo_id;
+end;
 $$;
 
 create or replace function public.set_event_signup_requirements(
@@ -493,12 +635,18 @@ create trigger set_gallery_photos_updated_at
   before update on public.gallery_photos
   for each row execute procedure public.set_updated_at();
 
+drop trigger if exists set_documents_library_updated_at on public.documents_library;
+create trigger set_documents_library_updated_at
+  before update on public.documents_library
+  for each row execute procedure public.set_updated_at();
+
 alter table public.user_profiles enable row level security;
 alter table public.roster_members enable row level security;
 alter table public.calendar_events enable row level security;
 alter table public.event_signup_requirements enable row level security;
 alter table public.event_signups enable row level security;
 alter table public.gallery_photos enable row level security;
+alter table public.documents_library enable row level security;
 
 -- Remove old policies if you rerun the file.
 drop policy if exists "Users can view their own profile" on public.user_profiles;
@@ -518,8 +666,14 @@ drop policy if exists "Staff can delete signup requirements" on public.event_sig
 drop policy if exists "Authenticated users can view signups" on public.event_signups;
 drop policy if exists "Public can view gallery photos" on public.gallery_photos;
 drop policy if exists "Members and staff can upload gallery photos" on public.gallery_photos;
+drop policy if exists "Members and staff can update gallery photos" on public.gallery_photos;
+drop policy if exists "Authenticated users can view documents" on public.documents_library;
+drop policy if exists "Staff can upload documents" on public.documents_library;
 drop policy if exists "Rostered users can upload gallery objects" on storage.objects;
 drop policy if exists "Uploaders can delete gallery objects" on storage.objects;
+drop policy if exists "Authenticated users can view document objects" on storage.objects;
+drop policy if exists "Staff can upload document objects" on storage.objects;
+drop policy if exists "Staff can delete document objects" on storage.objects;
 
 create policy "Users can view their own profile"
   on public.user_profiles
@@ -719,8 +873,65 @@ create policy "Members and staff can upload gallery photos"
     )
   );
 
+create policy "Members and staff can update gallery photos"
+  on public.gallery_photos
+  for update
+  to authenticated
+  using (
+    exists (
+      select 1
+      from public.roster_members members
+      where lower(members.contact) = lower(coalesce(auth.jwt() ->> 'email', ''))
+    )
+    or exists (
+      select 1
+      from public.user_profiles profiles
+      where profiles.user_id = (select auth.uid())
+        and profiles.role = 'staff'
+    )
+  )
+  with check (
+    exists (
+      select 1
+      from public.roster_members members
+      where lower(members.contact) = lower(coalesce(auth.jwt() ->> 'email', ''))
+    )
+    or exists (
+      select 1
+      from public.user_profiles profiles
+      where profiles.user_id = (select auth.uid())
+        and profiles.role = 'staff'
+    )
+  );
+
+create policy "Authenticated users can view documents"
+  on public.documents_library
+  for select
+  to authenticated
+  using (true);
+
+create policy "Staff can upload documents"
+  on public.documents_library
+  for insert
+  to authenticated
+  with check (
+    uploader_user_id = (select auth.uid())
+    and exists (
+      select 1
+      from public.user_profiles profiles
+      where profiles.user_id = (select auth.uid())
+        and profiles.role = 'staff'
+    )
+  );
+
 insert into storage.buckets (id, name, public)
 values ('gallery-photos', 'gallery-photos', true)
+on conflict (id) do update
+set name = excluded.name,
+    public = excluded.public;
+
+insert into storage.buckets (id, name, public)
+values ('documents-library', 'documents-library', false)
 on conflict (id) do update
 set name = excluded.name,
     public = excluded.public;
@@ -755,8 +966,48 @@ create policy "Uploaders can delete gallery objects"
     and owner_id = (select auth.uid()::text)
   );
 
+create policy "Authenticated users can view document objects"
+  on storage.objects
+  for select
+  to authenticated
+  using (bucket_id = 'documents-library');
+
+create policy "Staff can upload document objects"
+  on storage.objects
+  for insert
+  to authenticated
+  with check (
+    bucket_id = 'documents-library'
+    and exists (
+      select 1
+      from public.user_profiles profiles
+      where profiles.user_id = (select auth.uid())
+        and profiles.role = 'staff'
+    )
+  );
+
+create policy "Staff can delete document objects"
+  on storage.objects
+  for delete
+  to authenticated
+  using (
+    bucket_id = 'documents-library'
+    and exists (
+      select 1
+      from public.user_profiles profiles
+      where profiles.user_id = (select auth.uid())
+        and profiles.role = 'staff'
+    )
+  );
+
 revoke all on function public.set_event_signup_requirements(uuid, jsonb) from public;
 grant execute on function public.set_event_signup_requirements(uuid, jsonb) to authenticated;
+
+revoke all on function public.fetch_public_leadership_directory() from public;
+grant execute on function public.fetch_public_leadership_directory() to anon, authenticated;
+
+revoke all on function public.set_about_featured_photo(uuid, integer) from public;
+grant execute on function public.set_about_featured_photo(uuid, integer) to authenticated;
 
 revoke all on function public.sign_up_for_event(uuid) from public;
 grant execute on function public.sign_up_for_event(uuid) to authenticated;

@@ -76,6 +76,20 @@
         <div class="container">
           <div class="section-heading">
             <div>
+              <p class="eyebrow">Featured Scenes</p>
+              <h2>Selected directly from the member gallery.</h2>
+            </div>
+            <p>The image blocks below can be chosen from the private gallery page so the public About section always shows current club activity.</p>
+          </div>
+          <p class="empty-state" id="about-gallery-empty" hidden></p>
+          <div class="about-gallery-grid" id="about-gallery-grid"></div>
+        </div>
+      </section>
+
+      <section>
+        <div class="container">
+          <div class="section-heading">
+            <div>
               <p class="eyebrow">Core Areas</p>
               <h2>What the organization is built around.</h2>
             </div>
@@ -116,5 +130,7 @@
   </div>
 
   <script src="assets/js/site.js"></script>
+  <script src="assets/js/supabase-config.js"></script>
+  <script type="module" src="assets/js/about-gallery.js"></script>
 </body>
 </html>

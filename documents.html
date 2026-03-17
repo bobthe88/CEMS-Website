@@ -47,11 +47,10 @@
           <div class="page-intro">
             <div>
               <p class="eyebrow">Reference Material</p>
-              <h1>Put SOPs, manuals, and forms in one official place.</h1>
+              <h1>Upload, sort, and find official documents quickly.</h1>
             </div>
             <p>
-              This page is ready to hold your standard operating procedures, training manuals, onboarding packets, and administrative references.
-              The card layout keeps the library organized and professional even as it grows.
+              The documents tab now supports live uploads for staff and folder-based browsing for members, so SOPs, manuals, and forms stay centralized instead of scattered.
             </p>
           </div>
         </div>
@@ -61,27 +60,90 @@
         <div class="container documents-shell">
           <div class="section-heading">
             <div>
-              <p class="eyebrow">Document Groups</p>
-              <h2>Structured for operations and training.</h2>
+              <p class="eyebrow">Document Browser</p>
+              <h2>Browse documents by folder.</h2>
             </div>
-            <p>Upload final PDF files to <code>assets/documents</code> and then connect those file paths in the shared data file.</p>
+            <p>Use the folder filter to jump directly to training packets, SOPs, administrative files, or any other collection staff maintains.</p>
           </div>
-          <div id="documents-grid"></div>
+          <div class="status-banner" id="documents-status-message" hidden></div>
+          <div class="documents-results-toolbar">
+            <div class="field documents-folder-filter">
+              <label for="documents-folder-list">Folder</label>
+              <select id="documents-folder-list">
+                <option value="__all_documents__">All Documents</option>
+              </select>
+            </div>
+            <div class="documents-folder-summary">
+              <div class="section-heading compact">
+                <div>
+                  <p class="eyebrow">Current View</p>
+                  <h2 id="documents-folder-title">All Documents</h2>
+                </div>
+                <p id="documents-folder-description">The documents library is loading.</p>
+              </div>
+            </div>
+          </div>
+          <p class="empty-state documents-empty-state" id="documents-empty-state" hidden></p>
+          <div class="documents-card-grid" id="documents-grid"></div>
         </div>
       </section>
 
       <section>
-        <div class="container split-grid">
-          <article class="note-card">
-            <span class="page-accent">Recommended Files</span>
-            <h3>Good starting documents</h3>
-            <p>Begin with your SOP, onboarding guide, recurring training references, equipment inventory sheets, and event coverage checklists.</p>
-          </article>
-          <article class="note-card">
-            <span class="page-accent">Naming Convention</span>
-            <h3>Keep file names predictable</h3>
-            <p>Short, clear names like <code>cems-sop.pdf</code> and <code>airway-trauma-manual.pdf</code> make long-term maintenance easier.</p>
-          </article>
+        <div class="container documents-shell">
+          <div class="section-heading">
+            <div>
+              <p class="eyebrow">Staff Uploads</p>
+              <h2>Publish new documents from the website.</h2>
+            </div>
+            <p>Staff can upload official documents directly here. Members can always browse and open the files from the library above.</p>
+          </div>
+          <div class="documents-upload-grid">
+            <article class="note-card documents-upload-card">
+              <span class="page-accent">Upload Document</span>
+              <h3>Add or expand the library</h3>
+              <p>Use clear titles and folder names so members can find the right file without digging through unrelated references.</p>
+              <div class="documents-upload-locked" id="documents-upload-locked" hidden>
+                Only staff accounts can upload official documents. Members can still browse and open any file already in the library.
+              </div>
+              <form class="documents-upload-form" id="documents-upload-form" hidden>
+                <div class="field">
+                  <label for="documents-upload-file">Document file</label>
+                  <input
+                    id="documents-upload-file"
+                    name="file"
+                    type="file"
+                    accept=".pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.txt,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document,application/vnd.ms-excel,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/vnd.ms-powerpoint,application/vnd.openxmlformats-officedocument.presentationml.presentation,text/plain"
+                    required
+                  >
+                </div>
+                <div class="field">
+                  <label for="documents-upload-title">Title</label>
+                  <input id="documents-upload-title" name="title" type="text" maxlength="120" placeholder="CEMS Standard Operating Procedure">
+                </div>
+                <div class="field">
+                  <label for="documents-upload-folder">Folder</label>
+                  <input id="documents-upload-folder" name="folder" type="text" maxlength="80" placeholder="Operations, Training, Administrative">
+                </div>
+                <div class="field field-span-2">
+                  <label for="documents-upload-description">Description</label>
+                  <textarea id="documents-upload-description" name="description" rows="4" maxlength="280" placeholder="Brief explanation of what this document covers and when to use it."></textarea>
+                </div>
+                <div class="button-row">
+                  <button class="button button-primary" id="documents-upload-submit" type="submit">Upload document</button>
+                </div>
+              </form>
+            </article>
+            <article class="note-card documents-guide-card">
+              <span class="page-accent">Organization</span>
+              <h3>Recommended folder plan</h3>
+              <p>Separate operational references, training material, onboarding packets, and administrative files so members can filter down to the exact set they need.</p>
+              <div class="detail-list">
+                <span>Folder-aware filtering</span>
+                <span>Staff-only uploads</span>
+                <span>Protected member access</span>
+              </div>
+            </article>
+          </div>
         </div>
       </section>
     </main>
@@ -89,7 +151,7 @@
     <footer class="site-footer">
       <div class="container footer-shell">
         <p><strong>CEMS</strong> | Cadet Emergency Medical Services</p>
-        <p>Documents live in <code>assets/documents</code>. <span data-current-year></span></p>
+        <p>Documents sync from protected Supabase storage for authenticated members. <span data-current-year></span></p>
       </div>
     </footer>
   </div>

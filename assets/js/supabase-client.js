@@ -8,11 +8,14 @@ const config = {
   eventTable: rawConfig.eventTable || "calendar_events",
   galleryTable: rawConfig.galleryTable || "gallery_photos",
   galleryBucket: rawConfig.galleryBucket || "gallery-photos",
+  documentsTable: rawConfig.documentsTable || "documents_library",
+  documentsBucket: rawConfig.documentsBucket || "documents-library",
   profileTable: rawConfig.profileTable || "user_profiles",
   portalRedirect: rawConfig.portalRedirect || "member-home.html",
 };
 
 const CERTIFICATION_ORDER = ["AEMT", "EMT", "68W", "EMR"];
+const DOCUMENT_SIGNED_URL_TTL_SECONDS = 28800;
 const pendingSessionStorageKey = "cems-pending-session";
 const calendarEventSelect = `
   id,
@@ -45,6 +48,19 @@ const galleryPhotoSelect = `
   title,
   description,
   folder_name,
+  about_feature_slot,
+  storage_path,
+  uploader_name,
+  created_at
+`;
+const documentRecordSelect = `
+  id,
+  title,
+  description,
+  folder_name,
+  file_name,
+  file_size,
+  content_type,
   storage_path,
   uploader_name,
   created_at
@@ -133,6 +149,11 @@ function normalizeGalleryFolderName(value) {
   return normalized || "Unsorted";
 }
 
+function normalizeDocumentFolderName(value) {
+  const normalized = String(value || "").replace(/\s+/g, " ").trim();
+  return normalized || "General";
+}
+
 function sanitizeFileName(value) {
   const normalized = String(value || "")
     .normalize("NFKD")
@@ -155,6 +176,11 @@ function slugifyStorageSegment(value) {
   return slug || "gallery";
 }
 
+function isSupportedDocumentFile(file) {
+  const name = String(file?.name || "");
+  return /\.(pdf|doc|docx|xls|xlsx|ppt|pptx|txt)$/i.test(name);
+}
+
 function getPublicStorageUrl(bucketName, objectPath) {
   const supabase = getSupabaseClient();
 
@@ -166,14 +192,47 @@ function getPublicStorageUrl(bucketName, objectPath) {
   return data?.publicUrl || "";
 }
 
+async function createSignedStorageUrl(bucketName, objectPath, expiresIn = DOCUMENT_SIGNED_URL_TTL_SECONDS) {
+  const supabase = getSupabaseClient();
+
+  if (!supabase || !bucketName || !objectPath) {
+    return "";
+  }
+
+  const { data, error } = await supabase.storage.from(bucketName).createSignedUrl(objectPath, expiresIn);
+
+  if (error) {
+    throw error;
+  }
+
+  return data?.signedUrl || "";
+}
+
 function normalizeGalleryPhoto(row) {
   return {
     id: row.id,
     title: row.title || "",
     description: row.description || "",
     folderName: normalizeGalleryFolderName(row.folder_name),
+    aboutFeatureSlot: row.about_feature_slot == null ? null : Number(row.about_feature_slot),
     storagePath: row.storage_path || "",
     imageUrl: getPublicStorageUrl(config.galleryBucket, row.storage_path || ""),
+    uploaderName: row.uploader_name || "",
+    createdAt: row.created_at || "",
+  };
+}
+
+function normalizeDocumentRecord(row, downloadUrl = "") {
+  return {
+    id: row.id,
+    title: row.title || "",
+    description: row.description || "",
+    folderName: normalizeDocumentFolderName(row.folder_name),
+    fileName: row.file_name || "",
+    fileSize: Number(row.file_size || 0),
+    contentType: row.content_type || "",
+    storagePath: row.storage_path || "",
+    downloadUrl,
     uploaderName: row.uploader_name || "",
     createdAt: row.created_at || "",
   };
@@ -567,6 +626,102 @@ export async function fetchGalleryPhotos() {
   return (data || []).map(normalizeGalleryPhoto);
 }
 
+export async function fetchAboutFeaturedPhotos() {
+  const supabase = getSupabaseClient();
+
+  if (!supabase) {
+    throw new Error("Supabase is not configured yet.");
+  }
+
+  const { data, error } = await supabase
+    .from(config.galleryTable)
+    .select(galleryPhotoSelect)
+    .not("about_feature_slot", "is", null)
+    .order("about_feature_slot", { ascending: true });
+
+  if (error) {
+    throw error;
+  }
+
+  return (data || []).map(normalizeGalleryPhoto);
+}
+
+export async function updateGalleryPhotoAboutSlot(photoId, aboutFeatureSlot) {
+  const supabase = getSupabaseClient();
+
+  if (!supabase) {
+    throw new Error("Supabase is not configured yet.");
+  }
+
+  const normalizedSlot = aboutFeatureSlot == null || aboutFeatureSlot === ""
+    ? null
+    : Number(aboutFeatureSlot);
+
+  if (normalizedSlot != null && (!Number.isInteger(normalizedSlot) || normalizedSlot < 1 || normalizedSlot > 3)) {
+    throw new Error("About page feature slots must be 1, 2, or 3.");
+  }
+
+  const { error } = await supabase.rpc("set_about_featured_photo", {
+    p_photo_id: photoId,
+    p_slot: normalizedSlot,
+  });
+
+  if (error) {
+    throw error;
+  }
+}
+
+export async function fetchLeadershipDirectory() {
+  const supabase = getSupabaseClient();
+
+  if (!supabase) {
+    throw new Error("Supabase is not configured yet.");
+  }
+
+  const { data, error } = await supabase.rpc("fetch_public_leadership_directory");
+
+  if (error) {
+    throw error;
+  }
+
+  return (data || []).map((row) => ({
+    name: row.name || "",
+    email: row.email || "",
+    phone: row.phone || "",
+    leadership: row.leadership || "",
+  }));
+}
+
+export async function fetchDocuments() {
+  const supabase = getSupabaseClient();
+
+  if (!supabase) {
+    throw new Error("Supabase is not configured yet.");
+  }
+
+  const { data, error } = await supabase
+    .from(config.documentsTable)
+    .select(documentRecordSelect)
+    .order("folder_name", { ascending: true })
+    .order("created_at", { ascending: false })
+    .order("title", { ascending: true });
+
+  if (error) {
+    throw error;
+  }
+
+  return Promise.all(
+    (data || []).map(async (row) => {
+      try {
+        const downloadUrl = await createSignedStorageUrl(config.documentsBucket, row.storage_path || "");
+        return normalizeDocumentRecord(row, downloadUrl);
+      } catch (_error) {
+        return normalizeDocumentRecord(row, "");
+      }
+    })
+  );
+}
+
 export async function createCalendarEvent(event) {
   const supabase = getSupabaseClient();
 
@@ -730,6 +885,98 @@ export async function uploadGalleryPhoto(payload) {
   }
 
   return normalizeGalleryPhoto(data);
+}
+
+export async function uploadDocument(payload) {
+  const supabase = getSupabaseClient();
+
+  if (!supabase) {
+    throw new Error("Supabase is not configured yet.");
+  }
+
+  const file = payload?.file || null;
+
+  if (!(file instanceof File)) {
+    throw new Error("Choose a document file before uploading.");
+  }
+
+  if (!isSupportedDocumentFile(file)) {
+    throw new Error("Upload a supported document file such as PDF, Word, Excel, PowerPoint, or text.");
+  }
+
+  const context = await getSessionContext();
+
+  if (!context.user) {
+    throw new Error("You must be signed in before uploading documents.");
+  }
+
+  if (context.role !== "staff") {
+    throw new Error("Only staff accounts can upload documents.");
+  }
+
+  const currentMember = await fetchCurrentRosterMember();
+  const uploaderName = currentMember?.name || context.user.email || "CEMS Staff";
+  const title = String(payload?.title || "").trim();
+  const description = String(payload?.description || "").trim();
+  const folderName = normalizeDocumentFolderName(payload?.folderName);
+  const originalFileName = String(file.name || "").trim() || "document";
+
+  if (!title) {
+    throw new Error("Add a title before uploading.");
+  }
+
+  const uniqueSegment = typeof crypto?.randomUUID === "function"
+    ? crypto.randomUUID()
+    : `${Date.now()}-${Math.random().toString(16).slice(2)}`;
+  const storagePath = [
+    slugifyStorageSegment(folderName),
+    `${uniqueSegment}-${sanitizeFileName(originalFileName)}`,
+  ].join("/");
+
+  const { error: uploadError } = await supabase.storage
+    .from(config.documentsBucket)
+    .upload(storagePath, file, {
+      cacheControl: "3600",
+      contentType: file.type || undefined,
+      upsert: false,
+    });
+
+  if (uploadError) {
+    throw uploadError;
+  }
+
+  const record = {
+    title,
+    description,
+    folder_name: folderName,
+    file_name: originalFileName,
+    file_size: Number(file.size || 0),
+    content_type: file.type || "",
+    storage_path: storagePath,
+    uploader_user_id: context.user.id,
+    uploader_name: uploaderName,
+  };
+
+  const { data, error } = await supabase
+    .from(config.documentsTable)
+    .insert(record)
+    .select(documentRecordSelect)
+    .single();
+
+  if (error) {
+    await supabase.storage.from(config.documentsBucket).remove([storagePath]);
+    throw error;
+  }
+
+  let downloadUrl = "";
+
+  try {
+    downloadUrl = await createSignedStorageUrl(config.documentsBucket, data.storage_path || "");
+  } catch (_error) {
+    downloadUrl = "";
+  }
+
+  return normalizeDocumentRecord(data, downloadUrl);
 }
 
 export async function signUpForEvent(eventId) {

@@ -176,6 +176,12 @@ async function loadProtectedPageScripts() {
     return;
   }
 
+  if (page === "documents") {
+    await loadScript("assets/js/site.js");
+    await loadScript("assets/js/documents-app.js", { module: true });
+    return;
+  }
+
   await loadScript("assets/js/data.js");
 
   if (page === "member-home" || page === "signup") {
@@ -183,6 +189,10 @@ async function loadProtectedPageScripts() {
   }
 
   await loadScript("assets/js/site.js");
+
+  if (page === "member-home") {
+    await loadScript("assets/js/member-home-gallery.js", { module: true });
+  }
 }
 
 async function initializeGuard() {

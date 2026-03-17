@@ -1,4 +1,4 @@
-import { fetchGalleryPhotos, uploadGalleryPhoto } from "./supabase-client.js";
+import { fetchGalleryPhotos, updateGalleryPhotoAboutSlot, uploadGalleryPhoto } from "./supabase-client.js";
 
 const ALL_PHOTOS_FOLDER = "__all_photos__";
 const UNSORTED_FOLDER = "Unsorted";
@@ -13,6 +13,7 @@ const state = {
   initialized: false,
   lastSyncedFolder: ALL_PHOTOS_FOLDER,
   optimisticPreviewUrl: "",
+  activeAboutSlotPhotoId: "",
 };
 
 const dom = {
@@ -55,6 +56,7 @@ function normalizePhoto(photo) {
     description: normalizeText(photo?.description),
     imageUrl: normalizeText(photo?.imageUrl),
     folderName: normalizeFolderName(photo?.folderName),
+    aboutFeatureSlot: photo?.aboutFeatureSlot == null ? null : Number(photo.aboutFeatureSlot),
     createdAt: normalizeText(photo?.createdAt),
     uploaderName: normalizeText(photo?.uploaderName),
   };
@@ -313,6 +315,11 @@ function renderPhotoCard(photo) {
   const createdLabel = formatDateTime(photo.createdAt);
   const folderLabel = photo.folderName || UNSORTED_FOLDER;
   const altText = `${photo.title} in ${folderLabel}`;
+  const aboutSlotValue = photo.aboutFeatureSlot == null ? "" : String(photo.aboutFeatureSlot);
+  const aboutSlotDisabled = state.activeAboutSlotPhotoId === photo.id ? "disabled" : "";
+  const aboutSlotStatus = photo.aboutFeatureSlot == null
+    ? "Not featured on About page."
+    : `About page slot ${photo.aboutFeatureSlot}.`;
 
   return `
     <article class="gallery-photo-card${hasImage ? " has-image" : " no-image"}" data-photo-id="${escapeHtml(photo.id)}">
@@ -341,6 +348,23 @@ function renderPhotoCard(photo) {
             ? `<p class="gallery-photo-muted">Uploaded by ${escapeHtml(photo.uploaderName)}</p>`
             : ""
         }
+        <div class="gallery-photo-control">
+          <label class="gallery-photo-control-label" for="about-slot-${escapeHtml(photo.id)}">About page slot</label>
+          <select
+            class="gallery-photo-control-select"
+            id="about-slot-${escapeHtml(photo.id)}"
+            data-about-slot-photo-id="${escapeHtml(photo.id)}"
+            ${aboutSlotDisabled}
+          >
+            <option value="" ${aboutSlotValue === "" ? "selected" : ""}>Not featured</option>
+            <option value="1" ${aboutSlotValue === "1" ? "selected" : ""}>Slot 1</option>
+            <option value="2" ${aboutSlotValue === "2" ? "selected" : ""}>Slot 2</option>
+            <option value="3" ${aboutSlotValue === "3" ? "selected" : ""}>Slot 3</option>
+          </select>
+          <p class="gallery-photo-muted">${escapeHtml(
+            state.activeAboutSlotPhotoId === photo.id ? "Saving about-page selection..." : aboutSlotStatus
+          )}</p>
+        </div>
       </div>
     </article>
   `;
@@ -384,6 +408,7 @@ function renderGrid() {
   dom.grid.innerHTML = visiblePhotos.map(renderPhotoCard).join("");
   renderEmptyState(visiblePhotos.length);
   attachImageErrorFallbacks();
+  bindAboutSlotActions();
 }
 
 function renderUploadFolderOptions() {
@@ -525,6 +550,53 @@ async function loadPhotos() {
   } finally {
     state.loading = false;
   }
+}
+
+async function handleAboutSlotChange(event) {
+  const target = event.target instanceof HTMLSelectElement ? event.target : null;
+
+  if (!target) {
+    return;
+  }
+
+  const photoId = target.dataset.aboutSlotPhotoId || "";
+
+  if (!photoId || state.activeAboutSlotPhotoId) {
+    return;
+  }
+
+  const selectedValue = target.value === "" ? null : Number(target.value);
+  const photo = state.photos.find((entry) => entry.id === photoId);
+  const photoTitle = photo?.title || "photo";
+
+  state.activeAboutSlotPhotoId = photoId;
+  render();
+
+  try {
+    await updateGalleryPhotoAboutSlot(photoId, selectedValue);
+    await loadPhotos();
+    setStatus(
+      selectedValue == null
+        ? `${photoTitle} was removed from the About page.`
+        : `${photoTitle} is now assigned to About page slot ${selectedValue}.`,
+      "success"
+    );
+  } catch (error) {
+    setError(error?.message || "Unable to update the About page selection.");
+  } finally {
+    state.activeAboutSlotPhotoId = "";
+    render();
+  }
+}
+
+function bindAboutSlotActions() {
+  if (!dom.grid) {
+    return;
+  }
+
+  dom.grid.querySelectorAll("[data-about-slot-photo-id]").forEach((select) => {
+    select.addEventListener("change", handleAboutSlotChange);
+  });
 }
 
 function getUploadFolderValue() {

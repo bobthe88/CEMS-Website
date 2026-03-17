@@ -61,12 +61,43 @@
         <div class="container gallery-shell">
           <div class="section-heading">
             <div>
-              <p class="eyebrow">Gallery Control</p>
-              <h2>Manage the live photo library.</h2>
+              <p class="eyebrow">Gallery Browser</p>
+              <h2>View folders and photos first.</h2>
             </div>
-            <p>Use the form below to upload new images, assign them to a folder, and immediately place them into the shared gallery rotation.</p>
+            <p>Use the folder dropdown to jump directly to the collection you need, then review the photos loaded in that folder.</p>
           </div>
           <div class="status-banner" id="gallery-status-message" hidden></div>
+          <div class="gallery-results-toolbar">
+            <div class="field gallery-folder-filter">
+              <label for="gallery-folder-list">Folder</label>
+              <select id="gallery-folder-list">
+                <option value="__all_photos__">All Photos</option>
+              </select>
+            </div>
+            <div class="gallery-folder-summary">
+              <div class="section-heading compact">
+                <div>
+                  <p class="eyebrow">Current View</p>
+                  <h2 id="gallery-folder-title">All Photos</h2>
+                </div>
+                <p id="gallery-folder-description">The gallery is loading.</p>
+              </div>
+            </div>
+          </div>
+          <p class="empty-state gallery-empty-state" id="gallery-empty-state" hidden></p>
+          <div class="gallery-grid" id="gallery-grid"></div>
+        </div>
+      </section>
+
+      <section>
+        <div class="container gallery-shell">
+          <div class="section-heading">
+            <div>
+              <p class="eyebrow">Upload Control</p>
+              <h2>Add a new image to the gallery.</h2>
+            </div>
+            <p>The upload form stays below the gallery so members can browse first, then add a new image to the right folder.</p>
+          </div>
           <div class="gallery-form-grid">
             <article class="note-card gallery-upload-card">
               <span class="page-accent">Upload Photo</span>
@@ -98,39 +129,13 @@
             <article class="note-card gallery-guide-card">
               <span class="page-accent">Organization</span>
               <h3>Folder structure and public rotation</h3>
-              <p>Folders let you separate staffing, training, leadership, and outreach imagery while keeping the main gallery easy to scan.</p>
+              <p>Folders let you separate staffing, training, leadership, and outreach imagery while keeping the main gallery easy to scan. Each photo card also includes an About page slot selector for the public site.</p>
               <div class="detail-list">
-                <span>Folder-aware filtering</span>
+                <span>Dropdown folder navigation</span>
                 <span>Homepage rotation every 30 seconds</span>
                 <span>Newest uploads appear first</span>
               </div>
             </article>
-          </div>
-        </div>
-      </section>
-
-      <section>
-        <div class="container gallery-workspace">
-          <aside class="gallery-folder-panel">
-            <div class="section-heading compact">
-              <div>
-                <p class="eyebrow">Folders</p>
-                <h2>Browse by collection.</h2>
-              </div>
-            </div>
-            <div class="gallery-folder-list" id="gallery-folder-list"></div>
-          </aside>
-
-          <div class="gallery-results-panel">
-            <div class="section-heading compact">
-              <div>
-                <p class="eyebrow">Current View</p>
-                <h2 id="gallery-folder-title">All Photos</h2>
-              </div>
-              <p id="gallery-folder-description">The gallery is loading.</p>
-            </div>
-            <p class="empty-state gallery-empty-state" id="gallery-empty-state" hidden></p>
-            <div class="gallery-grid" id="gallery-grid"></div>
           </div>
         </div>
       </section>

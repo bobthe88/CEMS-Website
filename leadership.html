@@ -64,7 +64,7 @@
               <p class="eyebrow">Wire Diagram</p>
               <h2>Current leadership layout.</h2>
             </div>
-            <p>The chart below is generated from a single shared leadership list, so updating names or emails only needs to happen once.</p>
+            <p>The chart below is generated from leadership positions on the roster, with only public-facing leadership contacts exposed to this page.</p>
           </div>
           <div class="org-chart" id="leadership-chart"></div>
         </div>
@@ -79,8 +79,8 @@
           </article>
           <article class="note-card">
             <span class="page-accent">Editing Note</span>
-            <h3>Update once, display everywhere</h3>
-            <p>Edit leadership roles in <code>assets/js/data.js</code> whenever positions turn over. The chart will update automatically after that change.</p>
+            <h3>Roster-driven hierarchy</h3>
+            <p>Update leadership titles in the roster and this public diagram will reorganize itself automatically around the OIC, CIC, ACIC, and all remaining leaders.</p>
           </article>
         </div>
       </section>
@@ -89,12 +89,14 @@
     <footer class="site-footer">
       <div class="container footer-shell">
         <p><strong>CEMS</strong> | Cadet Emergency Medical Services</p>
-        <p>Leadership contacts are managed in <code>assets/js/data.js</code>. <span data-current-year></span></p>
+        <p>Leadership contacts sync from the roster-backed public directory. <span data-current-year></span></p>
       </div>
     </footer>
   </div>
 
   <script src="assets/js/data.js"></script>
   <script src="assets/js/site.js"></script>
+  <script src="assets/js/supabase-config.js"></script>
+  <script type="module" src="assets/js/leadership-app.js"></script>
 </body>
 </html>
