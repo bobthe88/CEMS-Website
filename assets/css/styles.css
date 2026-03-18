@@ -286,6 +286,11 @@ p {
   flex-wrap: wrap;
 }
 
+.hero-actions {
+  align-items: flex-start;
+  gap: 0.8rem;
+}
+
 .hero-actions .button {
   padding: 0.72rem 1.05rem;
   font-size: 0.92rem;
@@ -702,6 +707,7 @@ p {
   gap: 0.45rem;
 }
 
+.field > span,
 .field label {
   color: var(--ink-muted);
   font-size: 0.84rem;
@@ -719,6 +725,50 @@ p {
   border: 1px solid rgba(16, 20, 23, 0.12);
   background: rgba(255, 255, 255, 0.92);
   color: var(--ink);
+}
+
+.field textarea {
+  min-height: 150px;
+  resize: vertical;
+}
+
+.request-draft-layout {
+  align-items: start;
+}
+
+.request-draft-card {
+  display: grid;
+  gap: 1.2rem;
+  padding: 1.4rem;
+  background: rgba(255, 255, 255, 0.82);
+  border: 1px solid rgba(16, 20, 23, 0.08);
+  border-radius: var(--radius-sm);
+  box-shadow: 0 16px 36px rgba(16, 20, 23, 0.05);
+}
+
+.request-draft-grid {
+  display: grid;
+  gap: 1rem;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.request-draft-field-wide {
+  grid-column: 1 / -1;
+}
+
+.request-draft-actions {
+  display: flex;
+  gap: 0.85rem;
+  flex-wrap: wrap;
+}
+
+.request-draft-feedback {
+  color: var(--ink-muted);
+  font-size: 0.94rem;
+}
+
+.request-draft-card .field textarea {
+  min-height: 150px;
 }
 
 .data-table-shell {
@@ -1406,6 +1456,10 @@ p {
 
   .home-gallery-overlay {
     min-height: 280px;
+  }
+
+  .request-draft-grid {
+    grid-template-columns: 1fr;
   }
 }
 
