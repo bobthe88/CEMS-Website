@@ -182,6 +182,12 @@ async function loadProtectedPageScripts() {
     return;
   }
 
+  if (page === "service-requests") {
+    await loadScript("assets/js/site.js");
+    await loadScript("assets/js/service-requests-app.js", { module: true });
+    return;
+  }
+
   await loadScript("assets/js/data.js");
 
   if (page === "member-home" || page === "signup") {
@@ -211,13 +217,19 @@ async function initializeGuard() {
       timeoutMs,
       intervalMs: 120,
     });
+    const requiresAuth = document.body.dataset.requiresAuth || "member";
 
     if (!context.user) {
       redirectToPortal();
       return;
     }
 
-    if (context.role !== "staff") {
+    if (requiresAuth === "staff" && context.role !== "staff") {
+      redirectToPortal();
+      return;
+    }
+
+    if (requiresAuth === "member" && context.role !== "staff") {
       const memberRecord = await fetchCurrentRosterMember();
 
       if (!memberRecord) {
@@ -241,7 +253,12 @@ async function initializeGuard() {
         return;
       }
 
-      if (updatedContext.role !== "staff") {
+      if (requiresAuth === "staff" && updatedContext.role !== "staff") {
+        redirectToPortal();
+        return;
+      }
+
+      if (requiresAuth === "member" && updatedContext.role !== "staff") {
         const memberRecord = await fetchCurrentRosterMember();
 
         if (!memberRecord) {

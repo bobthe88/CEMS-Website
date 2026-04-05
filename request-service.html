@@ -50,11 +50,11 @@
               <h1>Request CEMS support for an event or operational need.</h1>
             </div>
             <p>
-              Use the draft fields below to capture the core details leadership needs for medical standby or coordination.
-              Early notice makes it easier to plan staffing, clarify requirements, and confirm whether support is available.
+              Use the form below to send a request into the staff queue. Requests are stored for review and emailed to the CIC, ACIC,
+              Executive Officer, and Director of Operations when notification delivery is configured.
             </p>
             <div class="button-row">
-              <a class="button button-primary" href="#request-draft">Open Request Draft</a>
+              <a class="button button-primary" href="#request-draft">Open Request Form</a>
               <a class="button button-secondary" href="leadership.html">View Leadership Contacts</a>
             </div>
           </div>
@@ -65,47 +65,48 @@
         <div class="container">
           <div class="section-heading">
             <div>
-              <p class="eyebrow">Request Draft</p>
+              <p class="eyebrow">Request Form</p>
               <h2>Prefill the basic event details.</h2>
             </div>
-            <p>This page stays static, so the fields are set up as a clear draft sheet you can edit before sharing the request through your normal channel.</p>
+            <p>Submit the request here and it will be queued for staff review. If leadership email delivery is configured, the request also goes to the CIC, ACIC, Executive Officer, and Director of Operations.</p>
           </div>
           <div class="split-grid request-draft-layout">
             <article class="note-card request-draft-note">
               <span class="page-accent">How It Works</span>
               <h3>Keep the request focused</h3>
-              <p>Start with the event title, how many people you expect to need, a short description of the support request, and the date. Those four fields give leadership the fastest read on what is needed.</p>
-              <p class="muted-text">The draft can be copied and reused for email, text, or a conversation with leadership.</p>
+              <p>Start with the event title, how many people you expect to need, a short description of the support request, and the date. Those four fields give staff the fastest read on what is needed.</p>
+              <p class="muted-text">You can still copy the draft text if you want a manual backup for email or a direct conversation.</p>
             </article>
 
             <form class="request-draft-card" id="request-draft-form" novalidate>
               <div class="request-draft-grid">
                 <label class="field" for="request-event-title">
                   <span>Event title</span>
-                  <input id="request-event-title" name="eventTitle" type="text" value="Campus event medical standby" autocomplete="off">
+                  <input id="request-event-title" name="eventTitle" type="text" value="Campus event medical standby" autocomplete="off" maxlength="120" required>
                 </label>
 
                 <label class="field" for="request-people-count">
                   <span>Requested number of people</span>
-                  <input id="request-people-count" name="peopleCount" type="number" min="1" step="1" value="6" inputmode="numeric">
+                  <input id="request-people-count" name="peopleCount" type="number" min="1" step="1" value="6" inputmode="numeric" required>
                 </label>
 
                 <label class="field request-draft-field-wide" for="request-description">
                   <span>Description</span>
-                  <textarea id="request-description" name="description" rows="5">Requesting medical support for an upcoming event. Please include arrival time, venue access details, and any special coordination notes.</textarea>
+                  <textarea id="request-description" name="description" rows="5" maxlength="500" required>Requesting medical support for an upcoming event. Please include arrival time, venue access details, and any special coordination notes.</textarea>
                 </label>
 
                 <label class="field" for="request-date">
                   <span>Date</span>
-                  <input id="request-date" name="eventDate" type="date">
+                  <input id="request-date" name="eventDate" type="date" required>
                 </label>
               </div>
 
               <div class="request-draft-actions">
-                <button class="button button-primary" id="copy-request-draft" type="button">Copy draft</button>
+                <button class="button button-secondary" id="copy-request-draft" type="button">Copy draft</button>
+                <button class="button button-primary" id="submit-request-draft" type="submit">Submit request</button>
                 <a class="button button-secondary" href="leadership.html">View Leadership Contacts</a>
               </div>
-              <p class="request-draft-feedback" id="request-draft-feedback" aria-live="polite">The draft is ready to edit.</p>
+              <p class="status-banner info request-draft-feedback" id="request-draft-feedback" aria-live="polite">Fill out the form and submit the request to queue it for staff review.</p>
             </form>
           </div>
         </div>
@@ -170,60 +171,7 @@
   </div>
 
   <script src="assets/js/site.js"></script>
-  <script>
-    (function () {
-      const dateField = document.getElementById("request-date");
-      const copyButton = document.getElementById("copy-request-draft");
-      const feedback = document.getElementById("request-draft-feedback");
-      const titleField = document.getElementById("request-event-title");
-      const peopleField = document.getElementById("request-people-count");
-      const descriptionField = document.getElementById("request-description");
-
-      function formatDate(date) {
-        return date.toISOString().slice(0, 10);
-      }
-
-      function buildDraftText() {
-        return [
-          `Event title: ${titleField.value.trim() || "N/A"}`,
-          `Requested number of people: ${peopleField.value.trim() || "N/A"}`,
-          `Date: ${dateField.value || "N/A"}`,
-          `Description: ${descriptionField.value.trim() || "N/A"}`
-        ].join("\n");
-      }
-
-      if (dateField && !dateField.value) {
-        const nextWeek = new Date();
-        nextWeek.setDate(nextWeek.getDate() + 7);
-        dateField.value = formatDate(nextWeek);
-      }
-
-      if (copyButton && feedback) {
-        copyButton.addEventListener("click", async () => {
-          const draftText = buildDraftText();
-
-          try {
-            await navigator.clipboard.writeText(draftText);
-            feedback.textContent = "Request draft copied to clipboard.";
-          } catch (_error) {
-            const fallbackField = document.createElement("textarea");
-            fallbackField.value = draftText;
-            fallbackField.setAttribute("readonly", "");
-            fallbackField.style.position = "fixed";
-            fallbackField.style.opacity = "0";
-            document.body.appendChild(fallbackField);
-            fallbackField.select();
-
-            const copied = document.execCommand("copy");
-            document.body.removeChild(fallbackField);
-
-            feedback.textContent = copied
-              ? "Request draft copied to clipboard."
-              : "Clipboard access was blocked. Select the fields manually and copy the draft.";
-          }
-        });
-      }
-    })();
-  </script>
+  <script src="assets/js/supabase-config.js"></script>
+  <script type="module" src="assets/js/service-request.js"></script>
 </body>
 </html>

@@ -89,6 +89,25 @@ create table if not exists public.documents_library (
   updated_at timestamptz not null default timezone('utc', now())
 );
 
+create table if not exists public.service_requests (
+  id uuid primary key default gen_random_uuid(),
+  event_title text not null,
+  requested_people integer not null check (requested_people > 0),
+  description text not null,
+  event_date date not null,
+  status text not null default 'pending' check (status in ('pending', 'approved', 'denied')),
+  requester_name text not null default '',
+  requester_email text not null default '',
+  request_source text not null default 'public-site',
+  notification_status text not null default 'pending' check (notification_status in ('pending', 'sent', 'partial', 'failed', 'not_configured')),
+  notification_error text not null default '',
+  reviewer_notes text not null default '',
+  reviewed_by uuid references auth.users(id) on delete set null,
+  reviewed_at timestamptz,
+  created_at timestamptz not null default timezone('utc', now()),
+  updated_at timestamptz not null default timezone('utc', now())
+);
+
 alter table public.gallery_photos
   add column if not exists description text not null default '';
 
@@ -143,6 +162,51 @@ alter table public.documents_library
 alter table public.documents_library
   add column if not exists updated_at timestamptz not null default timezone('utc', now());
 
+alter table public.service_requests
+  add column if not exists event_title text not null default '';
+
+alter table public.service_requests
+  add column if not exists requested_people integer not null default 1;
+
+alter table public.service_requests
+  add column if not exists description text not null default '';
+
+alter table public.service_requests
+  add column if not exists event_date date;
+
+alter table public.service_requests
+  add column if not exists status text not null default 'pending';
+
+alter table public.service_requests
+  add column if not exists requester_name text not null default '';
+
+alter table public.service_requests
+  add column if not exists requester_email text not null default '';
+
+alter table public.service_requests
+  add column if not exists request_source text not null default 'public-site';
+
+alter table public.service_requests
+  add column if not exists notification_status text not null default 'pending';
+
+alter table public.service_requests
+  add column if not exists notification_error text not null default '';
+
+alter table public.service_requests
+  add column if not exists reviewer_notes text not null default '';
+
+alter table public.service_requests
+  add column if not exists reviewed_by uuid references auth.users(id) on delete set null;
+
+alter table public.service_requests
+  add column if not exists reviewed_at timestamptz;
+
+alter table public.service_requests
+  add column if not exists created_at timestamptz not null default timezone('utc', now());
+
+alter table public.service_requests
+  add column if not exists updated_at timestamptz not null default timezone('utc', now());
+
 create index if not exists event_signup_requirements_event_id_idx
   on public.event_signup_requirements (event_id);
 
@@ -176,6 +240,15 @@ create index if not exists documents_library_folder_name_idx
 
 create unique index if not exists documents_library_storage_path_key
   on public.documents_library (storage_path);
+
+create index if not exists service_requests_created_at_idx
+  on public.service_requests (created_at desc);
+
+create index if not exists service_requests_status_idx
+  on public.service_requests (status);
+
+create index if not exists service_requests_event_date_idx
+  on public.service_requests (event_date desc);
 
 create or replace function public.set_updated_at()
 returns trigger
@@ -640,6 +713,11 @@ create trigger set_documents_library_updated_at
   before update on public.documents_library
   for each row execute procedure public.set_updated_at();
 
+drop trigger if exists set_service_requests_updated_at on public.service_requests;
+create trigger set_service_requests_updated_at
+  before update on public.service_requests
+  for each row execute procedure public.set_updated_at();
+
 alter table public.user_profiles enable row level security;
 alter table public.roster_members enable row level security;
 alter table public.calendar_events enable row level security;
@@ -647,6 +725,7 @@ alter table public.event_signup_requirements enable row level security;
 alter table public.event_signups enable row level security;
 alter table public.gallery_photos enable row level security;
 alter table public.documents_library enable row level security;
+alter table public.service_requests enable row level security;
 
 -- Remove old policies if you rerun the file.
 drop policy if exists "Users can view their own profile" on public.user_profiles;
@@ -669,6 +748,9 @@ drop policy if exists "Members and staff can upload gallery photos" on public.ga
 drop policy if exists "Members and staff can update gallery photos" on public.gallery_photos;
 drop policy if exists "Authenticated users can view documents" on public.documents_library;
 drop policy if exists "Staff can upload documents" on public.documents_library;
+drop policy if exists "Staff can view service requests" on public.service_requests;
+drop policy if exists "Staff can update service requests" on public.service_requests;
+drop policy if exists "Staff can delete service requests" on public.service_requests;
 drop policy if exists "Rostered users can upload gallery objects" on storage.objects;
 drop policy if exists "Uploaders can delete gallery objects" on storage.objects;
 drop policy if exists "Authenticated users can view document objects" on storage.objects;
@@ -917,6 +999,53 @@ create policy "Staff can upload documents"
   with check (
     uploader_user_id = (select auth.uid())
     and exists (
+      select 1
+      from public.user_profiles profiles
+      where profiles.user_id = (select auth.uid())
+        and profiles.role = 'staff'
+    )
+  );
+
+create policy "Staff can view service requests"
+  on public.service_requests
+  for select
+  to authenticated
+  using (
+    exists (
+      select 1
+      from public.user_profiles profiles
+      where profiles.user_id = (select auth.uid())
+        and profiles.role = 'staff'
+    )
+  );
+
+create policy "Staff can update service requests"
+  on public.service_requests
+  for update
+  to authenticated
+  using (
+    exists (
+      select 1
+      from public.user_profiles profiles
+      where profiles.user_id = (select auth.uid())
+        and profiles.role = 'staff'
+    )
+  )
+  with check (
+    exists (
+      select 1
+      from public.user_profiles profiles
+      where profiles.user_id = (select auth.uid())
+        and profiles.role = 'staff'
+    )
+  );
+
+create policy "Staff can delete service requests"
+  on public.service_requests
+  for delete
+  to authenticated
+  using (
+    exists (
       select 1
       from public.user_profiles profiles
       where profiles.user_id = (select auth.uid())

@@ -6,6 +6,8 @@ const config = {
   publishableKey: rawConfig.publishableKey || rawConfig.anonKey || "",
   rosterTable: rawConfig.rosterTable || "roster_members",
   eventTable: rawConfig.eventTable || "calendar_events",
+  serviceRequestTable: rawConfig.serviceRequestTable || "service_requests",
+  serviceRequestFunction: rawConfig.serviceRequestFunction || "submit-service-request",
   galleryTable: rawConfig.galleryTable || "gallery_photos",
   galleryBucket: rawConfig.galleryBucket || "gallery-photos",
   documentsTable: rawConfig.documentsTable || "documents_library",
@@ -259,6 +261,37 @@ function normalizeDocumentRecord(row, downloadUrl = "") {
     downloadUrl,
     uploaderName: row.uploader_name || "",
     createdAt: row.created_at || "",
+  };
+}
+
+function normalizeServiceRequestStatus(value) {
+  const status = String(value || "").trim().toLowerCase();
+
+  if (status === "approved" || status === "denied" || status === "pending") {
+    return status;
+  }
+
+  return "pending";
+}
+
+function normalizeServiceRequest(row) {
+  return {
+    id: row.id,
+    eventTitle: row.event_title || row.title || row.request_title || "",
+    requestedPeople: Number(row.requested_people || row.people_requested || row.people_count || 0),
+    description: row.description || row.request_description || row.details || "",
+    eventDate: row.event_date || row.request_date || row.date || "",
+    requestSource: row.request_source || "",
+    requesterName: row.requester_name || row.requested_by || "",
+    requesterEmail: row.requester_email || row.email || "",
+    notificationStatus: row.notification_status || "",
+    notificationError: row.notification_error || "",
+    reviewerNotes: row.reviewer_notes || "",
+    reviewedAt: row.reviewed_at || "",
+    reviewedBy: row.reviewed_by || "",
+    status: normalizeServiceRequestStatus(row.status || row.request_status || row.approval_status),
+    createdAt: row.created_at || row.submitted_at || "",
+    updatedAt: row.updated_at || row.reviewed_at || "",
   };
 }
 
@@ -628,6 +661,136 @@ export async function fetchCalendarEvents() {
   }
 
   return (data || []).map(normalizeCalendarEvent);
+}
+
+export async function fetchServiceRequests(options = {}) {
+  const supabase = getSupabaseClient();
+
+  if (!supabase) {
+    throw new Error("Supabase is not configured yet.");
+  }
+
+  let query = supabase
+    .from(config.serviceRequestTable)
+    .select(`
+      id,
+      event_title,
+      requested_people,
+      description,
+      event_date,
+      status,
+      requester_name,
+      requester_email,
+      request_source,
+      notification_status,
+      notification_error,
+      reviewer_notes,
+      reviewed_at,
+      reviewed_by,
+      created_at,
+      updated_at
+    `)
+    .order("created_at", { ascending: false });
+
+  if (Array.isArray(options.statuses) && options.statuses.length) {
+    query = query.in("status", options.statuses);
+  } else if (String(options.status || "").trim()) {
+    query = query.eq("status", String(options.status).trim());
+  }
+
+  const { data, error } = await query;
+
+  if (error) {
+    throw error;
+  }
+
+  return (data || []).map(normalizeServiceRequest);
+}
+
+export async function submitServiceRequest(payload) {
+  const supabase = getSupabaseClient();
+
+  if (!supabase) {
+    throw new Error("Supabase is not configured yet.");
+  }
+
+  const { data, error } = await supabase.functions.invoke(config.serviceRequestFunction, {
+    body: {
+      eventTitle: String(payload?.eventTitle || "").trim(),
+      requestedPeople: Number(payload?.requestedPeople || 0),
+      eventDate: String(payload?.eventDate || "").trim(),
+      description: String(payload?.description || "").trim(),
+      requestSource: String(payload?.requestSource || "public-site").trim(),
+      requesterName: String(payload?.requesterName || "").trim(),
+      requesterEmail: String(payload?.requesterEmail || "").trim(),
+    },
+  });
+
+  if (error) {
+    throw error;
+  }
+
+  return data || {};
+}
+
+export async function updateServiceRequestStatus(id, updates = {}) {
+  const supabase = getSupabaseClient();
+
+  if (!supabase) {
+    throw new Error("Supabase is not configured yet.");
+  }
+
+  const normalizedId = String(id || "").trim();
+  const normalizedStatus = normalizeServiceRequestStatus(updates.status);
+
+  if (!normalizedId) {
+    throw new Error("Choose a service request before updating it.");
+  }
+
+  if (normalizedStatus === "pending" && !updates.allowPending) {
+    throw new Error("Choose approved or denied when reviewing a pending request.");
+  }
+
+  const context = await getSessionContext();
+
+  if (context.role !== "staff") {
+    throw new Error("Only staff accounts can update service requests.");
+  }
+
+  const { data, error } = await supabase
+    .from(config.serviceRequestTable)
+    .update({
+      status: normalizedStatus,
+      reviewer_notes: String(updates.reviewerNotes || "").trim(),
+      reviewed_at: normalizedStatus === "pending" ? null : new Date().toISOString(),
+      reviewed_by: normalizedStatus === "pending" ? null : context.user?.id || null,
+    })
+    .eq("id", normalizedId)
+    .select(`
+      id,
+      event_title,
+      requested_people,
+      description,
+      event_date,
+      status,
+      requester_name,
+      requester_email,
+      request_source,
+      notification_status,
+      notification_error,
+      reviewer_notes,
+      reviewed_at,
+      reviewed_by,
+      created_at,
+      updated_at
+    `)
+    .single();
+
+  if (error) {
+    throw error;
+  }
+
+  return normalizeServiceRequest(data);
 }
 
 export async function fetchGalleryPhotos(options = {}) {

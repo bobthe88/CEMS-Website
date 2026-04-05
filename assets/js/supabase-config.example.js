@@ -4,6 +4,8 @@ window.CEMS_SUPABASE_CONFIG = {
   rosterTable: "roster_members",
   galleryTable: "gallery_photos",
   galleryBucket: "gallery-photos",
+  serviceRequestTable: "service_requests",
+  serviceRequestFunction: "submit-service-request",
   documentsTable: "documents_library",
   documentsBucket: "documents-library",
   profileTable: "user_profiles",

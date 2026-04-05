@@ -41,6 +41,10 @@ body[data-requires-auth="member"][data-auth-state="pending"] .page-shell {
   display: none;
 }
 
+body[data-requires-auth="staff"][data-auth-state="pending"] .page-shell {
+  display: none;
+}
+
 body::before {
   content: "";
   position: fixed;
@@ -771,6 +775,120 @@ p {
   min-height: 150px;
 }
 
+.service-requests-panel {
+  gap: 1.25rem;
+}
+
+.service-requests-actions {
+  gap: 0.8rem;
+}
+
+.service-requests-board {
+  display: grid;
+  gap: 1rem;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  align-items: start;
+}
+
+.service-request-lane {
+  display: grid;
+  gap: 1rem;
+  padding: 1.2rem;
+  border-radius: var(--radius-sm);
+  border: 1px solid rgba(16, 20, 23, 0.08);
+  background: rgba(255, 255, 255, 0.8);
+  box-shadow: 0 16px 36px rgba(16, 20, 23, 0.05);
+}
+
+.service-request-lane.approved-lane {
+  background: linear-gradient(180deg, rgba(27, 95, 72, 0.08), rgba(255, 255, 255, 0.82));
+}
+
+.service-request-lane.denied-lane {
+  background: linear-gradient(180deg, rgba(140, 48, 48, 0.08), rgba(255, 255, 255, 0.82));
+}
+
+.service-request-list {
+  display: grid;
+  gap: 0.9rem;
+}
+
+.service-request-empty {
+  padding: 1rem;
+  border-radius: 14px;
+  border: 1px dashed rgba(16, 20, 23, 0.14);
+  color: var(--ink-muted);
+  background: rgba(247, 245, 240, 0.72);
+}
+
+.service-request-card {
+  display: grid;
+  gap: 0.85rem;
+  padding: 1rem;
+  border-radius: 14px;
+  border: 1px solid rgba(16, 20, 23, 0.08);
+  background: rgba(255, 255, 255, 0.94);
+}
+
+.service-request-card-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+}
+
+.service-request-meta {
+  display: flex;
+  gap: 0.55rem 0.9rem;
+  flex-wrap: wrap;
+  color: var(--ink-muted);
+  font-size: 0.92rem;
+}
+
+.request-card-actions {
+  display: flex;
+  gap: 0.7rem;
+  flex-wrap: wrap;
+}
+
+.request-status-pill {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: fit-content;
+  border-radius: 999px;
+  padding: 0.35rem 0.7rem;
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.request-status-pill.pending {
+  background: rgba(185, 146, 67, 0.18);
+  color: var(--gold-deep);
+}
+
+.request-status-pill.approved {
+  background: rgba(27, 95, 72, 0.16);
+  color: #1b5f48;
+}
+
+.request-status-pill.denied {
+  background: rgba(140, 48, 48, 0.14);
+  color: #8c3030;
+}
+
+.service-requests-summary-section {
+  padding-top: 1rem;
+  padding-bottom: 1.2rem;
+}
+
+.service-requests-board-section {
+  padding-top: 0;
+}
+
 .data-table-shell {
   overflow-x: auto;
 }
@@ -1459,6 +1577,10 @@ p {
   }
 
   .request-draft-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .service-requests-board {
     grid-template-columns: 1fr;
   }
 }

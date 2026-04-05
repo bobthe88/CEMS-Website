@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>CEMS | Service Requests</title>
+  <meta name="description" content="Staff-only service request review page for approving and denying incoming support requests.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600;700&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="assets/css/styles.css">
+  <link rel="icon" type="image/png" href="assets/images/favicon-96x96.png" sizes="96x96" />
+  <link rel="icon" type="image/svg+xml" href="assets/images/favicon.svg" />
+  <link rel="shortcut icon" href="assets/images/favicon.ico" />
+  <link rel="apple-touch-icon" sizes="180x180" href="assets/images/apple-touch-icon.png" />
+  <link rel="manifest" href="assets/images/site.webmanifest" />
+</head>
+<body data-page="service-requests" data-nav-scope="private" data-requires-auth="staff" data-auth-state="pending" aria-busy="true">
+  <div class="page-shell">
+    <header class="site-header">
+      <div class="top-stripe"></div>
+      <div class="container nav-shell">
+        <a class="brand" href="member-home.html">
+          <span class="brand-mark">
+            <img src="assets/images/CES%20Logo%20(1).png" alt="CEMS logo">
+          </span>
+          <span class="brand-text">
+            <strong>Cadet EMS</strong>
+            <small>Emergency Medical Services Club</small>
+          </span>
+        </a>
+        <button class="nav-toggle" type="button" aria-expanded="false" aria-controls="site-nav">Menu</button>
+        <nav class="site-nav" id="site-nav">
+          <a href="member-home.html" data-page="member-home">Member Home</a>
+          <a href="roster.html" data-page="roster">Roster</a>
+          <a href="calendar.html" data-page="calendar">Calendar</a>
+          <a href="gallery.html" data-page="gallery">Gallery</a>
+          <a href="documents.html" data-page="documents">Documents</a>
+        </nav>
+      </div>
+    </header>
+
+    <main>
+      <section class="page-banner">
+        <div class="container page-panel service-requests-panel">
+          <span class="page-accent staff-accent">Staff Only</span>
+          <div class="page-intro service-requests-intro">
+            <div>
+              <p class="eyebrow">Request Review</p>
+              <h1>Approve, deny, or leave incoming service requests pending.</h1>
+            </div>
+            <p>
+              This queue reflects public requests once they are submitted. Pending requests stay here until staff approve or deny them,
+              after which they move into the matching review section.
+            </p>
+            <div class="button-row service-requests-actions">
+              <button class="button button-primary button-small" id="service-requests-refresh" type="button">Refresh queue</button>
+              <a class="button button-secondary button-small" href="member-home.html">Back to Member Home</a>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="service-requests-status-section">
+        <div class="container">
+          <div class="status-banner" id="service-requests-message" hidden aria-live="polite"></div>
+        </div>
+      </section>
+
+      <section class="service-requests-summary-section">
+        <div class="container metrics-grid">
+          <article class="metric-card">
+            <strong id="service-requests-pending-count">0</strong>
+            <span>Pending</span>
+          </article>
+          <article class="metric-card">
+            <strong id="service-requests-approved-count">0</strong>
+            <span>Approved</span>
+          </article>
+          <article class="metric-card">
+            <strong id="service-requests-denied-count">0</strong>
+            <span>Denied</span>
+          </article>
+          <article class="metric-card">
+            <strong id="service-requests-total-count">0</strong>
+            <span>Total Requests</span>
+          </article>
+        </div>
+      </section>
+
+      <section class="service-requests-board-section">
+        <div class="container">
+          <div class="service-requests-board">
+            <article class="service-request-lane">
+              <div class="section-heading compact">
+                <div>
+                  <p class="eyebrow">Pending</p>
+                  <h2>Needs a decision</h2>
+                </div>
+                <p id="service-requests-pending-copy">Requests waiting for staff review.</p>
+              </div>
+              <div class="service-request-list" id="service-requests-pending"></div>
+            </article>
+
+            <article class="service-request-lane approved-lane">
+              <div class="section-heading compact">
+                <div>
+                  <p class="eyebrow">Approved</p>
+                  <h2>Cleared for support</h2>
+                </div>
+                <p id="service-requests-approved-copy">Requests approved by staff.</p>
+              </div>
+              <div class="service-request-list" id="service-requests-approved"></div>
+            </article>
+
+            <article class="service-request-lane denied-lane">
+              <div class="section-heading compact">
+                <div>
+                  <p class="eyebrow">Denied</p>
+                  <h2>Not proceeding</h2>
+                </div>
+                <p id="service-requests-denied-copy">Requests denied after review.</p>
+              </div>
+              <div class="service-request-list" id="service-requests-denied"></div>
+            </article>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <footer class="site-footer">
+      <div class="container footer-shell">
+        <p><strong>CEMS</strong> | Cadet Emergency Medical Services</p>
+        <p>Service requests are reviewed here by staff after public submission. <span data-current-year></span></p>
+      </div>
+    </footer>
+  </div>
+
+  <script src="assets/js/supabase-config.js"></script>
+  <script type="module" src="assets/js/auth-guard.js"></script>
+</body>
+</html>

@@ -101,6 +101,7 @@ const NAVIGATION_CONFIG = {
       { href: "member-home.html", page: "member-home", label: "Member Home" },
       { href: "roster.html", page: "roster", label: "Roster" },
       { href: "calendar.html", page: "calendar", label: "Calendar" },
+      { href: "service-requests.html", page: "service-requests", label: "Service Requests", staffOnly: true },
       { href: "gallery.html", page: "gallery", label: "Gallery" },
       { href: "documents.html", page: "documents", label: "Documents" },
     ],
@@ -116,6 +117,7 @@ function initializeNavigation() {
   const activePage = body.dataset.page;
   const navScope = body.dataset.navScope === "private" ? "private" : "public";
   const config = NAVIGATION_CONFIG[navScope];
+  const authRole = body.dataset.authRole || "guest";
 
   if (brand && config?.brandHref) {
     brand.setAttribute("href", config.brandHref);
@@ -123,6 +125,7 @@ function initializeNavigation() {
 
   if (nav && config?.links?.length) {
     const linksMarkup = config.links
+      .filter((link) => authRole === "staff" || !link.staffOnly)
       .map((link) => `<a href="${link.href}" data-page="${link.page}">${link.label}</a>`)
       .join("");
     const logoutMarkup = navScope === "private"
