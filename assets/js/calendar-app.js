@@ -169,6 +169,10 @@ function getEligibleRequirementForMember(event, certification) {
     })[0] || null;
 }
 
+function memberHasClaimableCertification(certification) {
+  return Boolean(CERTIFICATION_ELIGIBILITY[certification]);
+}
+
 function setMessage(text, tone = "info") {
   if (!authMessage) {
     return;
@@ -378,6 +382,14 @@ function getMemberActionState(event) {
       kind: "blocked",
       label: "Signups closed",
       note: "Staff has closed new signups for this event.",
+    };
+  }
+
+  if (!memberHasClaimableCertification(state.currentMember.certification)) {
+    return {
+      kind: "blocked",
+      label: "Certification required",
+      note: "Your roster record does not list a current medical certification, so you cannot claim staffing slots.",
     };
   }
 
@@ -595,6 +607,17 @@ function renderSessionUi() {
   sessionBadge.textContent = "Member Session";
   sessionBadge.className = "page-accent member-accent";
   sessionTitle.textContent = "Viewing enabled.";
+
+  if (!state.currentMember) {
+    sessionCopy.textContent = `${email} is signed in as a member, but this account is not linked to a roster record yet. You can view the calendar, but you cannot claim slots until staff adds your roster record.`;
+    return;
+  }
+
+  if (!memberHasClaimableCertification(state.currentMember.certification)) {
+    sessionCopy.textContent = `${email} is signed in as a member. Your roster record shows no current medical certification, so you can view the calendar but cannot claim certification-based slots.`;
+    return;
+  }
+
   sessionCopy.textContent = `${email} is signed in as a member. You can claim the highest eligible open slot for your roster certification.`;
 }
 
@@ -651,9 +674,13 @@ function renderDetailModal() {
 
   const action = getMemberActionState(selectedEvent);
   const summary = getSlotSummary(selectedEvent);
-  const memberCopy = state.currentMember
-    ? `${state.currentMember.name} is rostered as ${state.currentMember.certification} and can claim the highest eligible open slot for that certification.`
-    : "Your signed-in account is not linked to a roster record yet.";
+  const hasClaimableCertification = memberHasClaimableCertification(state.currentMember?.certification);
+  const memberCopy = !state.currentMember
+    ? "Your signed-in account is not linked to a roster record yet."
+    : hasClaimableCertification
+      ? `${state.currentMember.name} is rostered as ${state.currentMember.certification} and can claim the highest eligible open slot for that certification.`
+      : `${state.currentMember.name} is rostered with no current medical certification on file and cannot claim certification-based slots.`;
+  const memberPanelTone = hasClaimableCertification ? "" : "warning";
 
   setElementVisible(detailModal, true);
   document.body.classList.add("calendar-modal-open");
@@ -673,7 +700,7 @@ function renderDetailModal() {
       <span>${escapeHtml(selectedEvent.location)}</span>
       <span>${escapeHtml(selectedEvent.category)}</span>
     </div>
-    <div class="calendar-member-panel ${state.currentMember ? "" : "warning"}">
+    <div class="calendar-member-panel ${memberPanelTone}">
       <strong>Member view</strong>
       <p>${escapeHtml(memberCopy)}</p>
       <p>${escapeHtml(action.note)}</p>

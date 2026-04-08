@@ -180,10 +180,13 @@ function renderSession(context, memberRecord = null) {
   const returnTarget = getRequestedPath();
   const actionLabel = returnTarget === defaultProtectedPath ? "Open member site" : "Continue";
   const hasMemberAccess = context.role === "staff" || Boolean(memberRecord);
+  const hasClaimableCertification = Boolean(memberRecord?.certification) && memberRecord.certification !== "None";
   const sessionSummary = context.role === "staff"
     ? "You are signed in with <strong>staff</strong> access. Staff can browse the member site and use editing tools on the roster and calendar pages."
     : memberRecord
-      ? `You are signed in as <strong>${memberRecord.name}</strong> with <strong>${memberRecord.certification}</strong> coverage. You can browse the member site and claim calendar slots that match your certification.`
+      ? hasClaimableCertification
+        ? `You are signed in as <strong>${memberRecord.name}</strong> with <strong>${memberRecord.certification}</strong> coverage. You can browse the member site and claim calendar slots that match your certification.`
+        : `You are signed in as <strong>${memberRecord.name}</strong>. Your roster record shows <strong>None</strong> for certification, so you can browse the member site but cannot claim certification-based calendar slots.`
       : "This email is authenticated, but it is not linked to a roster record yet. Ask staff to add this address to the roster before using the private member site.";
   const continueAction = hasMemberAccess
     ? `<a class="button button-primary" href="${returnTarget}">${actionLabel}</a>`

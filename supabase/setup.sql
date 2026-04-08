@@ -14,7 +14,7 @@ create table if not exists public.user_profiles (
 create table if not exists public.roster_members (
   id uuid primary key default gen_random_uuid(),
   name text not null,
-  certification text not null check (certification in ('AEMT', 'EMT', 'EMR', '68W')),
+  certification text not null check (certification in ('None', 'AEMT', 'EMT', 'EMR', '68W')),
   contact text not null,
   phone_number text not null default '',
   company text not null,
@@ -26,6 +26,13 @@ create table if not exists public.roster_members (
 
 alter table public.roster_members
   add column if not exists phone_number text not null default '';
+
+alter table public.roster_members
+  drop constraint if exists roster_members_certification_check;
+
+alter table public.roster_members
+  add constraint roster_members_certification_check
+  check (certification in ('None', 'AEMT', 'EMT', 'EMR', '68W'));
 
 create table if not exists public.calendar_events (
   id uuid primary key default gen_random_uuid(),
